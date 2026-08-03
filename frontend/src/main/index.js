@@ -5,22 +5,166 @@ import {
   ipcMain,
   desktopCapturer,
   session,
-  systemPreferences
+  systemPreferences,
+  screen
 } from 'electron'
 
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 
 import icon from '../../resources/icon.png?asset'
 
-// Tắt tăng tốc phần cứng để hạn chế lỗi cửa sổ trong suốt trên Windows.
-app.disableHardwareAcceleration()
+const PLATFORM = process.platform
+
+const IS_WINDOWS = PLATFORM === 'win32'
+const IS_MAC = PLATFORM === 'darwin'
+const IS_LINUX = PLATFORM === 'linux'
+
+const DEFAULT_WIDTH = 920
+const DEFAULT_HEIGHT = 380
+
+const MIN_WIDTH = 460
+const MIN_HEIGHT = 180
+
+const RESIZE_INTERVAL_MS = 16
+const WINDOW_STATE_SAVE_DELAY_MS = 250
+
+const VALID_RESIZE_EDGES = new Set([
+  'top',
+  'right',
+  'bottom',
+  'left',
+  'top-left',
+  'top-right',
+  'bottom-left',
+  'bottom-right'
+])
 
 let mainWindow = null
 
-/**
- * Kiểm tra request quyền có đến từ cửa sổ chính của ứng dụng hay không.
- */
+let resizeState = null
+let resizeTimer = null
+let saveWindowStateTimer = null
+
+function getWindowStateFilePath() {
+  return join(app.getPath('userData'), 'katoba-window-state.json')
+}
+
+function getDefaultWindowBounds() {
+  const { workArea } = screen.getPrimaryDisplay()
+
+  const width = Math.min(DEFAULT_WIDTH, workArea.width)
+  const height = Math.min(DEFAULT_HEIGHT, workArea.height)
+
+  return {
+    x: Math.round(workArea.x + (workArea.width - width) / 2),
+    y: Math.round(workArea.y + (workArea.height - height) / 2),
+    width,
+    height
+  }
+}
+
+function normalizeWindowBounds(savedBounds) {
+  if (
+    !savedBounds ||
+    !Number.isFinite(savedBounds.x) ||
+    !Number.isFinite(savedBounds.y) ||
+    !Number.isFinite(savedBounds.width) ||
+    !Number.isFinite(savedBounds.height)
+  ) {
+    return getDefaultWindowBounds()
+  }
+
+  const display = screen.getDisplayMatching(savedBounds)
+  const { workArea } = display
+
+  const width = Math.min(Math.max(Math.round(savedBounds.width), MIN_WIDTH), workArea.width)
+
+  const height = Math.min(Math.max(Math.round(savedBounds.height), MIN_HEIGHT), workArea.height)
+
+  const maximumX = workArea.x + workArea.width - width
+  const maximumY = workArea.y + workArea.height - height
+
+  return {
+    x: Math.min(Math.max(Math.round(savedBounds.x), workArea.x), maximumX),
+    y: Math.min(Math.max(Math.round(savedBounds.y), workArea.y), maximumY),
+    width,
+    height
+  }
+}
+
+function readWindowState() {
+  try {
+    const stateFilePath = getWindowStateFilePath()
+
+    if (!existsSync(stateFilePath)) {
+      return {
+        bounds: getDefaultWindowBounds(),
+        alwaysOnTop: true
+      }
+    }
+
+    const storedState = JSON.parse(
+      readFileSync(stateFilePath, {
+        encoding: 'utf-8'
+      })
+    )
+
+    return {
+      bounds: normalizeWindowBounds(storedState.bounds),
+      alwaysOnTop: typeof storedState.alwaysOnTop === 'boolean' ? storedState.alwaysOnTop : true
+    }
+  } catch (error) {
+    console.warn('Không thể đọc trạng thái cửa sổ:', error)
+
+    return {
+      bounds: getDefaultWindowBounds(),
+      alwaysOnTop: true
+    }
+  }
+}
+
+function saveWindowState(targetWindow) {
+  if (!targetWindow || targetWindow.isDestroyed()) {
+    return
+  }
+
+  try {
+    const state = {
+      bounds: targetWindow.getNormalBounds(),
+      alwaysOnTop: targetWindow.isAlwaysOnTop()
+    }
+
+    writeFileSync(getWindowStateFilePath(), JSON.stringify(state, null, 2), {
+      encoding: 'utf-8'
+    })
+  } catch (error) {
+    console.warn('Không thể lưu trạng thái cửa sổ:', error)
+  }
+}
+
+function scheduleWindowStateSave(targetWindow) {
+  if (saveWindowStateTimer) {
+    clearTimeout(saveWindowStateTimer)
+  }
+
+  saveWindowStateTimer = setTimeout(() => {
+    saveWindowState(targetWindow)
+    saveWindowStateTimer = null
+  }, WINDOW_STATE_SAVE_DELAY_MS)
+}
+
+function getWindowFromEvent(event) {
+  const targetWindow = BrowserWindow.fromWebContents(event.sender)
+
+  if (!targetWindow || targetWindow.isDestroyed()) {
+    return null
+  }
+
+  return targetWindow
+}
+
 function isMainWindowRenderer(webContents) {
   return Boolean(
     mainWindow &&
@@ -30,11 +174,228 @@ function isMainWindowRenderer(webContents) {
   )
 }
 
-/**
- * Cấu hình quyền truy cập microphone cho renderer.
- *
- * Chỉ cửa sổ chính mới được cấp quyền media.
- * Các cửa sổ hoặc website bên ngoài sẽ bị từ chối.
+function sendMaximizedState(targetWindow) {
+  if (!targetWindow || targetWindow.isDestroyed() || targetWindow.webContents.isDestroyed()) {
+    return
+  }
+
+  targetWindow.webContents.send('window:maximized-changed', targetWindow.isMaximized())
+}
+
+function setAlwaysOnTopForPlatform(targetWindow, enabled) {
+  if (!targetWindow || targetWindow.isDestroyed()) {
+    return false
+  }
+
+  if (!enabled) {
+    targetWindow.setAlwaysOnTop(false)
+    return false
+  }
+
+  if (IS_MAC) {
+    targetWindow.setAlwaysOnTop(true, 'floating')
+
+    targetWindow.setVisibleOnAllWorkspaces(true, {
+      visibleOnFullScreen: true
+    })
+  } else if (IS_WINDOWS) {
+    targetWindow.setAlwaysOnTop(true, 'screen-saver')
+  } else {
+    targetWindow.setAlwaysOnTop(true)
+  }
+
+  return targetWindow.isAlwaysOnTop()
+}
+
+function stopResizeLoop() {
+  if (resizeTimer) {
+    clearInterval(resizeTimer)
+    resizeTimer = null
+  }
+
+  resizeState = null
+}
+
+function calculateResizedBounds(edge, startBounds, deltaX, deltaY, workArea) {
+  let left = startBounds.x
+  let top = startBounds.y
+  let right = startBounds.x + startBounds.width
+  let bottom = startBounds.y + startBounds.height
+
+  const workAreaRight = workArea.x + workArea.width
+  const workAreaBottom = workArea.y + workArea.height
+
+  if (edge.includes('right')) {
+    right = Math.min(Math.max(startBounds.x + MIN_WIDTH, right + deltaX), workAreaRight)
+  }
+
+  if (edge.includes('left')) {
+    left = Math.max(Math.min(startBounds.x + deltaX, right - MIN_WIDTH), workArea.x)
+  }
+
+  if (edge.includes('bottom')) {
+    bottom = Math.min(Math.max(startBounds.y + MIN_HEIGHT, bottom + deltaY), workAreaBottom)
+  }
+
+  if (edge.includes('top')) {
+    top = Math.max(Math.min(startBounds.y + deltaY, bottom - MIN_HEIGHT), workArea.y)
+  }
+
+  return {
+    x: Math.round(left),
+    y: Math.round(top),
+    width: Math.round(right - left),
+    height: Math.round(bottom - top)
+  }
+}
+
+function startResizeLoop(targetWindow, edge) {
+  if (
+    !targetWindow ||
+    targetWindow.isDestroyed() ||
+    targetWindow.isMaximized() ||
+    !VALID_RESIZE_EDGES.has(edge)
+  ) {
+    return
+  }
+
+  stopResizeLoop()
+
+  const startBounds = targetWindow.getBounds()
+  const startCursor = screen.getCursorScreenPoint()
+  const display = screen.getDisplayMatching(startBounds)
+
+  resizeState = {
+    windowId: targetWindow.id,
+    edge,
+    startBounds,
+    startCursor,
+    workArea: display.workArea
+  }
+
+  resizeTimer = setInterval(() => {
+    if (!resizeState) {
+      stopResizeLoop()
+      return
+    }
+
+    const activeWindow = BrowserWindow.fromId(resizeState.windowId)
+
+    if (!activeWindow || activeWindow.isDestroyed()) {
+      stopResizeLoop()
+      return
+    }
+
+    const currentCursor = screen.getCursorScreenPoint()
+
+    const nextBounds = calculateResizedBounds(
+      resizeState.edge,
+      resizeState.startBounds,
+      currentCursor.x - resizeState.startCursor.x,
+      currentCursor.y - resizeState.startCursor.y,
+      resizeState.workArea
+    )
+
+    activeWindow.setBounds(nextBounds)
+  }, RESIZE_INTERVAL_MS)
+}
+
+/*
+ * Các nút và thao tác cửa sổ:
+ * — Thu nhỏ
+ * □ Phóng to/khôi phục
+ * × Đóng
+ * Kéo cạnh/góc để thay đổi kích thước
+ */
+function registerWindowControlHandlers() {
+  ipcMain.removeAllListeners('window:minimize')
+  ipcMain.removeAllListeners('window:close')
+  ipcMain.removeAllListeners('window:start-resize')
+  ipcMain.removeAllListeners('window:stop-resize')
+
+  ipcMain.removeHandler('window:toggle-maximize')
+  ipcMain.removeHandler('window:get-state')
+  ipcMain.removeHandler('window:set-always-on-top')
+
+  ipcMain.on('window:minimize', (event) => {
+    const targetWindow = getWindowFromEvent(event)
+
+    targetWindow?.minimize()
+  })
+
+  ipcMain.handle('window:toggle-maximize', (event) => {
+    const targetWindow = getWindowFromEvent(event)
+
+    if (!targetWindow) {
+      return false
+    }
+
+    stopResizeLoop()
+
+    if (targetWindow.isMaximized()) {
+      targetWindow.unmaximize()
+    } else {
+      targetWindow.maximize()
+    }
+
+    const isMaximized = targetWindow.isMaximized()
+
+    sendMaximizedState(targetWindow)
+
+    return isMaximized
+  })
+
+  ipcMain.on('window:close', (event) => {
+    const targetWindow = getWindowFromEvent(event)
+
+    targetWindow?.close()
+  })
+
+  ipcMain.handle('window:get-state', (event) => {
+    const targetWindow = getWindowFromEvent(event)
+
+    return {
+      platform: PLATFORM,
+      isWindows: IS_WINDOWS,
+      isMac: IS_MAC,
+      isLinux: IS_LINUX,
+      isMaximized: targetWindow?.isMaximized() ?? false,
+      isAlwaysOnTop: targetWindow?.isAlwaysOnTop() ?? true,
+      bounds: targetWindow?.getBounds() ?? null
+    }
+  })
+
+  ipcMain.handle('window:set-always-on-top', (event, shouldStayOnTop) => {
+    const targetWindow = getWindowFromEvent(event)
+
+    if (!targetWindow) {
+      return false
+    }
+
+    const isAlwaysOnTop = setAlwaysOnTopForPlatform(targetWindow, Boolean(shouldStayOnTop))
+
+    scheduleWindowStateSave(targetWindow)
+
+    return isAlwaysOnTop
+  })
+
+  ipcMain.on('window:start-resize', (event, edge) => {
+    const targetWindow = getWindowFromEvent(event)
+
+    if (!targetWindow) {
+      return
+    }
+
+    startResizeLoop(targetWindow, edge)
+  })
+
+  ipcMain.on('window:stop-resize', () => {
+    stopResizeLoop()
+  })
+}
+
+/*
+ * Cấp quyền microphone cho cửa sổ chính.
  */
 function configureMediaPermissions() {
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
@@ -48,16 +409,18 @@ function configureMediaPermissions() {
   })
 }
 
-/**
- * Đăng ký IPC lấy danh sách màn hình hoặc cửa sổ.
- *
- * Renderer chỉ cần source.id để capture System Audio,
- * nên không trả thumbnail để giảm dữ liệu truyền qua IPC.
+/*
+ * Lấy danh sách màn hình hoặc cửa sổ
+ * để renderer thu System Audio.
  */
 function registerDesktopCaptureHandler() {
   ipcMain.removeHandler('get-sources')
 
-  ipcMain.handle('get-sources', async (_event, options = {}) => {
+  ipcMain.handle('get-sources', async (event, options = {}) => {
+    if (!isMainWindowRenderer(event.sender)) {
+      throw new Error('Nguồn yêu cầu không hợp lệ.')
+    }
+
     const allowedTypes = ['screen', 'window']
 
     const requestedTypes = Array.isArray(options.types)
@@ -68,90 +431,99 @@ function registerDesktopCaptureHandler() {
 
     const sources = await desktopCapturer.getSources({
       types,
-
-      /*
-       * Renderer hiện chỉ dùng source.id.
-       * Không tạo thumbnail để tiết kiệm bộ nhớ.
-       */
       thumbnailSize: {
         width: 0,
         height: 0
       },
-
       fetchWindowIcons: false
     })
 
     return sources.map((source) => ({
       id: source.id,
-      name: source.name
+      name: source.name,
+      displayId: source.display_id
     }))
   })
 }
 
-/**
- * Yêu cầu quyền microphone trên macOS.
- *
- * Windows sẽ dùng quyền Microphone trong phần
- * Privacy & Security của hệ điều hành.
+/*
+ * Trên macOS, yêu cầu quyền microphone.
+ * Quyền ghi màn hình cần được bật trong System Settings.
  */
-async function requestMacMicrophonePermission() {
-  if (process.platform !== 'darwin') {
+async function requestMacPermissions() {
+  if (!IS_MAC) {
     return
   }
 
   try {
-    const isGranted = await systemPreferences.askForMediaAccess('microphone')
+    const microphoneStatus = systemPreferences.getMediaAccessStatus('microphone')
 
-    if (isGranted) {
-      console.log('✅ Đã được cấp quyền microphone trên macOS.')
+    if (microphoneStatus === 'not-determined') {
+      const isGranted = await systemPreferences.askForMediaAccess('microphone')
+
+      console.log(
+        isGranted ? '✅ macOS đã cấp quyền microphone.' : '⚠️ macOS chưa cấp quyền microphone.'
+      )
     } else {
-      console.warn('⚠️ Người dùng chưa cấp quyền microphone trên macOS.')
+      console.log(`🎤 Quyền microphone trên macOS: ${microphoneStatus}`)
     }
+
+    const screenStatus = systemPreferences.getMediaAccessStatus('screen')
+
+    console.log(`🖥 Quyền Screen Recording trên macOS: ${screenStatus}`)
   } catch (error) {
-    console.error('❌ Không thể yêu cầu quyền microphone:', error)
+    console.error('❌ Không thể kiểm tra quyền macOS:', error)
   }
 }
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
-    // Kích thước mặc định phù hợp với giao diện mới.
-    width: 900,
-    height: 340,
+  const savedWindowState = readWindowState()
 
-    // Không cho thu nhỏ cửa sổ quá mức.
-    minWidth: 420,
-    minHeight: 260,
+  const platformWindowOptions = IS_MAC
+    ? {
+        titleBarStyle: 'hiddenInset',
+        trafficLightPosition: {
+          x: 14,
+          y: 16
+        }
+      }
+    : {
+        frame: false
+      }
+
+  mainWindow = new BrowserWindow({
+    ...savedWindowState.bounds,
+
+    minWidth: MIN_WIDTH,
+    minHeight: MIN_HEIGHT,
 
     show: false,
     autoHideMenuBar: true,
 
-    // Cửa sổ overlay trong suốt.
+    /*
+     * Giữ cửa sổ trong suốt.
+     * Việc resize được xử lý bằng resize handle riêng
+     * thay vì dựa vào viền native.
+     */
     transparent: true,
     backgroundColor: '#00000000',
+    hasShadow: false,
 
-    // Tắt thanh tiêu đề mặc định.
-    frame: false,
-
-    // Cho phép kéo và thay đổi kích thước.
     movable: true,
-    resizable: true,
+    resizable: false,
 
-    // Cho phép thu nhỏ xuống taskbar.
     minimizable: true,
+    maximizable: true,
+    closable: true,
+    fullscreenable: false,
 
-    // Không cho phóng toàn màn hình.
-    maximizable: false,
+    alwaysOnTop: savedWindowState.alwaysOnTop,
 
-    // Luôn nằm trên các ứng dụng khác.
-    alwaysOnTop: true,
+    title: 'KaTOBA BridgeAI',
 
-    /*
-     * Không ẩn cửa sổ khi chuyển sang workspace khác.
-     * Có ích với ứng dụng phụ đề overlay.
-     */
-    visibleOnAllWorkspaces: true,
+    ...platformWindowOptions,
 
-    ...(process.platform === 'linux'
+    ...(IS_LINUX
       ? {
           icon
         }
@@ -160,30 +532,16 @@ function createWindow() {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
 
-      /*
-       * Giữ an toàn cho renderer:
-       * không cho Vue truy cập trực tiếp Node.js.
-       */
       contextIsolation: true,
       nodeIntegration: false,
-
-      /*
-       * Project hiện tại dùng preload của electron-toolkit,
-       * nên chưa bật sandbox.
-       */
       sandbox: false,
 
-      /*
-       * Audio phải tiếp tục chạy khi cửa sổ không được focus.
-       */
-      backgroundThrottling: false
+      backgroundThrottling: false,
+      navigateOnDragDrop: false
     }
   })
 
-  /*
-   * Bảo đảm overlay luôn nằm trên cùng.
-   */
-  mainWindow.setAlwaysOnTop(true, 'screen-saver')
+  setAlwaysOnTopForPlatform(mainWindow, savedWindowState.alwaysOnTop)
 
   mainWindow.on('ready-to-show', () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -191,14 +549,36 @@ function createWindow() {
     }
   })
 
+  mainWindow.on('maximize', () => {
+    stopResizeLoop()
+    sendMaximizedState(mainWindow)
+  })
+
+  mainWindow.on('unmaximize', () => {
+    sendMaximizedState(mainWindow)
+  })
+
+  mainWindow.on('restore', () => {
+    sendMaximizedState(mainWindow)
+  })
+
+  mainWindow.on('move', () => {
+    scheduleWindowStateSave(mainWindow)
+  })
+
+  mainWindow.on('resize', () => {
+    scheduleWindowStateSave(mainWindow)
+  })
+
+  mainWindow.on('close', () => {
+    stopResizeLoop()
+    saveWindowState(mainWindow)
+  })
+
   mainWindow.on('closed', () => {
     mainWindow = null
   })
 
-  /*
-   * Link bên ngoài sẽ mở bằng trình duyệt mặc định,
-   * không mở bên trong Electron.
-   */
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
 
@@ -207,9 +587,6 @@ function createWindow() {
     }
   })
 
-  /*
-   * Chặn việc Electron tự điều hướng sang website khác.
-   */
   mainWindow.webContents.on('will-navigate', (event, url) => {
     const currentUrl = mainWindow?.webContents.getURL()
 
@@ -227,7 +604,7 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.kakusin.katoba-bridge-ai')
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
@@ -237,20 +614,11 @@ app.whenReady().then(async () => {
     console.log('pong')
   })
 
-  /*
-   * Cấu hình quyền trước khi tạo cửa sổ.
-   */
   configureMediaPermissions()
-
-  /*
-   * Đăng ký chức năng lấy nguồn System Audio.
-   */
   registerDesktopCaptureHandler()
+  registerWindowControlHandlers()
 
-  /*
-   * Trên macOS sẽ hiện yêu cầu quyền microphone.
-   */
-  await requestMacMicrophonePermission()
+  await requestMacPermissions()
 
   createWindow()
 
@@ -262,11 +630,26 @@ app.whenReady().then(async () => {
 })
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  if (!IS_MAC) {
     app.quit()
   }
 })
 
 app.on('before-quit', () => {
+  stopResizeLoop()
+
+  if (saveWindowStateTimer) {
+    clearTimeout(saveWindowStateTimer)
+    saveWindowStateTimer = null
+  }
+
   ipcMain.removeHandler('get-sources')
+  ipcMain.removeHandler('window:toggle-maximize')
+  ipcMain.removeHandler('window:get-state')
+  ipcMain.removeHandler('window:set-always-on-top')
+
+  ipcMain.removeAllListeners('window:minimize')
+  ipcMain.removeAllListeners('window:close')
+  ipcMain.removeAllListeners('window:start-resize')
+  ipcMain.removeAllListeners('window:stop-resize')
 })
