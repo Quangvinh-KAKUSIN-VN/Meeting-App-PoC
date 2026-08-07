@@ -1,0 +1,307 @@
+{
+  "_comment": [
+    "Từ điển thuật ngữ KaTOBA BridgeAI.",
+    "",
+    "Cách hoạt động: SAU khi model dịch xong, nếu câu NGUỒN chứa 'ja' (hoặc",
+    "một trong 'ja_variants'), module sẽ tìm trong câu ĐÍCH xem có biến thể",
+    "sai nào trong 'vi_variants' không — có thì thay bằng 'vi'.",
+    "",
+    "Nguyên tắc an toàn: CHỈ THAY, KHÔNG BAO GIỜ CHÈN THÊM TỪ.",
+    "Nếu câu dịch không chứa biến thể nào thì để nguyên. Chèn từ vào câu dịch",
+    "dễ tạo ra câu vô nghĩa hơn là bỏ qua.",
+    "",
+    "Vì vậy 'vi_variants' mới là phần quan trọng nhất: đó là những cách dịch",
+    "SAI mà model thực sự sinh ra. Đọc transcript_log.txt để thu thập chúng,",
+    "đừng ngồi đoán.",
+    "",
+    "Khớp tiếng Việt không phân biệt hoa/thường và có kiểm tra ranh giới từ,",
+    "nên 'khuôn' sẽ không khớp nhầm bên trong 'khuôn khổ'.",
+    "",
+    "vi_guard: cụm từ tiếng Việt CHỨA biến thể nhưng phải để yên. Bắt buộc với biến thể một âm tiết như 'khuôn' — tiếng Việt viết rời từng âm tiết nên 'khuôn' trong 'khuôn khổ' vẫn qua được kiểm tra ranh giới từ.",
+    "ja_variants: bản dịch sang tiếng Nhật SAI mà model hay sinh, dùng cho chiều vi->ja. Danh sách hiện tại là phỏng đoán — thay bằng dữ liệu thật từ transcript_log.txt sau vài buổi họp."
+  ],
+  "entries": [
+    {
+      "ja": "ブランチ",
+      "vi": "nhánh",
+      "vi_variants": [
+        "chi nhánh",
+        "cành",
+        "nhánh cây",
+        "branch"
+      ],
+      "ja_variants": [
+        "支店",
+        "枝",
+        "分岐点"
+      ],
+      "vi_guard": [
+        "nhánh sông",
+        "phân nhánh"
+      ]
+    },
+    {
+      "ja": "マージ",
+      "vi": "merge",
+      "vi_variants": [
+        "hợp nhất",
+        "sáp nhập",
+        "gộp lại",
+        "trộn"
+      ],
+      "ja_variants": [
+        "統合",
+        "結合",
+        "合併"
+      ]
+    },
+    {
+      "ja": "コンフリクト",
+      "vi": "conflict",
+      "vi_variants": [
+        "xung đột",
+        "mâu thuẫn",
+        "tranh chấp"
+      ],
+      "ja_variants": [
+        "衝突",
+        "矛盾",
+        "紛争"
+      ]
+    },
+    {
+      "ja": "コミット",
+      "vi": "commit",
+      "vi_variants": [
+        "cam kết",
+        "giao phó",
+        "cống hiến"
+      ],
+      "ja_variants": [
+        "約束",
+        "献身"
+      ]
+    },
+    {
+      "ja": "デプロイ",
+      "vi": "deploy",
+      "vi_variants": [
+        "triển khai",
+        "bố trí",
+        "dàn trận"
+      ],
+      "ja_variants": [
+        "配置",
+        "展開",
+        "配備"
+      ]
+    },
+    {
+      "ja": "レビュー",
+      "vi": "review",
+      "vi_variants": [
+        "đánh giá",
+        "xem xét",
+        "bình luận",
+        "nhận xét"
+      ],
+      "ja_variants": [
+        "批評",
+        "感想"
+      ]
+    },
+    {
+      "ja": "リリース",
+      "vi": "release",
+      "vi_variants": [
+        "phát hành",
+        "giải phóng",
+        "thả ra"
+      ],
+      "ja_variants": [
+        "解放",
+        "釈放"
+      ]
+    },
+    {
+      "ja": "バグ",
+      "vi": "bug",
+      "vi_variants": [
+        "con bọ",
+        "lỗi bọ",
+        "sâu bọ"
+      ],
+      "ja_variants": [
+        "虫",
+        "昆虫"
+      ]
+    },
+    {
+      "ja": "サーバー",
+      "vi": "server",
+      "vi_variants": [
+        "máy chủ",
+        "người phục vụ",
+        "bồi bàn"
+      ],
+      "ja_variants": [
+        "給仕",
+        "ウェイター"
+      ]
+    },
+    {
+      "ja": "本番環境",
+      "vi": "môi trường production",
+      "vi_variants": [
+        "môi trường thực tế",
+        "môi trường sản xuất",
+        "sân khấu chính"
+      ]
+    },
+    {
+      "ja": "テスト環境",
+      "vi": "môi trường test",
+      "vi_variants": [
+        "môi trường thử nghiệm",
+        "môi trường kiểm tra"
+      ]
+    },
+    {
+      "ja": "仕様",
+      "vi": "spec",
+      "vi_variants": [
+        "đặc tả",
+        "quy cách",
+        "thông số kỹ thuật"
+      ]
+    },
+    {
+      "ja": "納期",
+      "vi": "hạn giao hàng",
+      "vi_variants": [
+        "thời hạn giao",
+        "kỳ hạn",
+        "deadline giao"
+      ],
+      "ja_variants": [
+        "締め切り",
+        "期限"
+      ]
+    },
+    {
+      "ja": "打ち合わせ",
+      "vi": "buổi họp",
+      "vi_variants": [
+        "cuộc thảo luận",
+        "sự sắp xếp",
+        "buổi trao đổi"
+      ]
+    },
+    {
+      "ja": "金型",
+      "vi": "khuôn dập",
+      "vi_variants": [
+        "khuôn",
+        "khuôn mẫu",
+        "khuôn đúc",
+        "mô hình kim loại"
+      ],
+      "ja_variants": [
+        "型",
+        "鋳型",
+        "モデル"
+      ],
+      "vi_guard": [
+        "khuôn khổ",
+        "khuôn viên",
+        "khuôn mặt",
+        "khuôn phép",
+        "khuôn mẫu hành vi"
+      ]
+    },
+    {
+      "ja": "工程",
+      "vi": "công đoạn",
+      "vi_variants": [
+        "quy trình",
+        "quá trình",
+        "tiến trình"
+      ],
+      "ja_variants": [
+        "過程",
+        "プロセス"
+      ]
+    },
+    {
+      "ja": "不良品",
+      "vi": "hàng lỗi",
+      "vi_variants": [
+        "sản phẩm xấu",
+        "hàng kém chất lượng",
+        "phế phẩm"
+      ],
+      "ja_variants": [
+        "悪い製品",
+        "粗悪品"
+      ]
+    },
+    {
+      "ja": "検査",
+      "vi": "kiểm tra",
+      "vi_variants": [
+        "thanh tra",
+        "khám xét",
+        "điều tra"
+      ],
+      "vi_guard": [
+        "kiểm tra viên"
+      ]
+    },
+    {
+      "ja": "段取り",
+      "vi": "chuẩn bị công đoạn",
+      "vi_variants": [
+        "sắp xếp",
+        "bố trí",
+        "dàn dựng"
+      ]
+    },
+    {
+      "ja": "稼働率",
+      "vi": "tỉ lệ vận hành",
+      "vi_variants": [
+        "tỷ lệ hoạt động",
+        "hiệu suất chạy máy"
+      ]
+    },
+    {
+      "ja": "残業",
+      "vi": "tăng ca",
+      "vi_variants": [
+        "làm thêm giờ",
+        "ngoài giờ",
+        "overtime"
+      ],
+      "ja_variants": [
+        "超過勤務",
+        "オーバータイム"
+      ]
+    },
+    {
+      "ja": "在庫",
+      "vi": "tồn kho",
+      "vi_variants": [
+        "hàng lưu kho",
+        "kho hàng",
+        "dự trữ"
+      ],
+      "ja_variants": [
+        "ストック",
+        "備蓄"
+      ],
+      "vi_guard": [
+        "tồn tại"
+      ]
+    }
+  ]
+}

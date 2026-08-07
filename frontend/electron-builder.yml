@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: frontend
+appId: com.katoba.app
+productName: KaTOBA
 directories:
   buildResources: build
 files:
@@ -10,13 +10,23 @@ files:
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
 asarUnpack:
   - resources/**
+# ==== NHÉT BACKEND + MODELS VÀO APP ====
+# Chép trọn backend/dist/main -> resources/backend trong app đã cài.
+# Khớp đúng đường dẫn join(process.resourcesPath, 'backend', 'main.exe') trong index.js.
+extraResources:
+  - from: ../backend/dist/main
+    to: backend
+    filter:
+      - '**/*'
 win:
-  executableName: frontend
-nsis:
-  artifactName: ${name}-${version}-setup.${ext}
-  shortcutName: ${productName}
-  uninstallDisplayName: ${productName}
-  createDesktopShortcut: always
+  executableName: KaTOBA
+  # target 'dir' -> chỉ tạo thư mục portable win-unpacked, dùng Inno Setup đóng installer riêng
+  # (tránh giới hạn mmap của NSIS khi app lớn — xem ghi chú bên dưới)
+  target:
+    - dir
+  # Chưa có logo -> để trống, electron-builder tự dùng icon Electron mặc định.
+  # Khi có file build/icon.ico, bỏ comment dòng dưới:
+  # icon: build/icon.ico
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:

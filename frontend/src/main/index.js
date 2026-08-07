@@ -11,6 +11,8 @@ import {
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'path'
+import { spawn, spawnSync } from 'node:child_process'
+import net from 'node:net'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 
 import icon from '../../resources/icon.png?asset'
@@ -43,9 +45,240 @@ const VALID_RESIZE_EDGES = new Set([
 
 let mainWindow = null
 
+// ============================================================
+// SINGLE INSTANCE LOCK — chặn mở nhiều app cùng lúc
+// (tránh spawn nhiều backend -> tốn gấp đôi RAM,
+// và tránh lệch ipcMain giữa các tiến trình gây "No handler registered")
+// ============================================================
+const gotSingleInstanceLock = app.requestSingleInstanceLock()
+
+if (!gotSingleInstanceLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    // Người dùng mở app lần 2 -> đưa cửa sổ hiện có lên trước, không mở thêm
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore()
+      }
+      mainWindow.focus()
+    }
+  })
+}
+
 let resizeState = null
 let resizeTimer = null
 let saveWindowStateTimer = null
+
+// Phân biệt "backend chết vì mình đang tắt app" với "backend crash".
+// Thiếu cờ này thì lúc thoát app sẽ bắn nhầm sự kiện backend:down cho renderer.
+let isQuitting = false
+
+// ============================================================
+// KHỞI ĐỘNG / TẮT BACKEND
+// ============================================================
+
+let backendProcess = null
+
+/*
+ * Đặt true để test spawn backend ngay khi chạy dev (npm run dev).
+ * Khi test: ĐỪNG chạy python main.py song song (trùng cổng 8765).
+ * Bản production (đã đóng gói) LUÔN tự spawn, không phụ thuộc cờ này.
+ */
+const SPAWN_BACKEND_IN_DEV = false
+
+/*
+ * NGUỒN SỰ THẬT DUY NHẤT cho cổng backend.
+ *
+ * Giá trị này được truyền xuống tiến trình Python qua biến môi trường
+ * KATOBA_PORT, nên chỉ cần sửa ở đây là cả hai phía cùng đổi.
+ *
+ * Renderer lấy cổng qua IPC 'backend:get-endpoint' — đừng viết cứng
+ * ws://127.0.0.1:8765 trong renderer nữa.
+ */
+const BACKEND_PORT = 8765
+const BACKEND_HOST = '127.0.0.1'
+
+// Nạp 3 model ONNX/CTranslate2 trên CPU. Máy cấu hình thấp (i5-8250U, 8GB,
+// không GPU) có thể mất hơn 30 giây -> để 90s cho chắc.
+const BACKEND_READY_TIMEOUT_MS = 90000
+
+// PyInstaller sinh main.exe trên Windows, main (không đuôi) trên macOS/Linux.
+const BACKEND_EXE = IS_WINDOWS ? 'main.exe' : 'main'
+
+function getBackendDir() {
+  if (app.isPackaged) {
+    // production: electron-builder chép backend vào resources/backend (extraResources)
+    return join(process.resourcesPath, 'backend')
+  }
+  // dev: dùng bản build ở backend/dist/main (chạy npm run dev từ thư mục frontend/)
+  return join(process.cwd(), '..', 'backend', 'dist', 'main')
+}
+
+function shouldSpawnBackend() {
+  return app.isPackaged || SPAWN_BACKEND_IN_DEV
+}
+
+/**
+ * Trả true nếu đã spawn được, false nếu không tìm thấy file.
+ * Nhờ giá trị trả về mà bên gọi không phải chờ vô ích 90 giây.
+ */
+function startBackend() {
+  const dir = getBackendDir()
+  const exePath = join(dir, BACKEND_EXE)
+
+  if (!existsSync(exePath)) {
+    console.error(`❌ Không tìm thấy backend tại: ${exePath}`)
+    return false
+  }
+
+  console.log(`🚀 Khởi động backend: ${exePath}`)
+  console.log(`📁 cwd: ${dir}`)
+  console.log(`🔌 Cổng: ${BACKEND_HOST}:${BACKEND_PORT}`)
+
+  backendProcess = spawn(exePath, [], {
+    cwd: dir,
+    windowsHide: true,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: {
+      ...process.env,
+      PYTHONUTF8: '1',
+      PYTHONIOENCODING: 'utf-8',
+
+      // main.py đọc hai biến này -> khỏi phải sửa cổng ở hai nơi
+      KATOBA_HOST: BACKEND_HOST,
+      KATOBA_PORT: String(BACKEND_PORT),
+
+      /*
+       * Ghi transcript ra đĩa mặc định TẮT.
+       *
+       * Nội dung họp doanh nghiệp không nên nằm dưới dạng văn bản thuần
+       * trong thư mục cài đặt. Chỉ bật khi cần thu thập dữ liệu để bổ sung
+       * glossary, và nhớ tắt lại.
+       */
+      KATOBA_TRANSCRIPT_LOG: '0',
+      KATOBA_VERBOSE: is.dev ? '1' : '0'
+    }
+  })
+
+  backendProcess.stdout?.on('data', (d) => console.log(`[backend] ${d.toString().trim()}`))
+  backendProcess.stderr?.on('data', (d) => console.error(`[backend-err] ${d.toString().trim()}`))
+
+  backendProcess.on('error', (err) => {
+    console.error(`❌ Spawn backend thất bại: ${err.message}`)
+    backendProcess = null
+  })
+
+  backendProcess.on('exit', (code, signal) => {
+    console.log(`[backend] đã thoát (code=${code}, signal=${signal})`)
+    backendProcess = null
+
+    /*
+     * Báo cho renderer biết backend đã chết.
+     *
+     * Không có tín hiệu này, renderer cứ thử reconnect mù rồi bỏ cuộc
+     * mà không hiểu vì sao — chính là triệu chứng của BUG-026.
+     */
+    if (!isQuitting && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('backend:down', { code, signal })
+    }
+  })
+
+  return true
+}
+
+function stopBackend() {
+  if (!backendProcess || backendProcess.killed) {
+    return
+  }
+
+  const pid = backendProcess.pid
+  backendProcess = null // chặn will-quit gọi lại lần nữa
+
+  console.log('🛑 Tắt backend...')
+
+  if (IS_WINDOWS) {
+    /*
+     * taskkill /T giết cả CÂY tiến trình, /F là cưỡng bức.
+     *
+     * Build onedir hiện tại thì kill() thường cũng đủ, vì main.exe chính là
+     * tiến trình thật. Nhưng nếu sau này đổi sang PyInstaller onefile,
+     * bootloader sẽ giải nén ra %TEMP%\_MEIxxxxx rồi spawn một tiến trình
+     * con — giết cha thì con vẫn sống và thư mục temp không được dọn.
+     * Dùng /T ngay từ bây giờ để khỏi phải nhớ lúc đổi cấu hình build.
+     *
+     * spawnSync chặn đồng bộ nên khi before-quit trả về là cây tiến trình
+     * đã chết hẳn, không cần event.preventDefault().
+     */
+    try {
+      spawnSync('taskkill', ['/pid', String(pid), '/T', '/F'], { windowsHide: true })
+    } catch (err) {
+      console.warn(`taskkill thất bại (${err.message}), thử process.kill()`)
+      try {
+        process.kill(pid)
+      } catch {
+        /* tiến trình đã chết */
+      }
+    }
+  } else {
+    try {
+      process.kill(pid, 'SIGTERM')
+    } catch {
+      /* tiến trình đã chết */
+    }
+  }
+}
+
+/**
+ * Chờ backend mở cổng. Thoát sớm nếu tiến trình đã chết.
+ */
+function waitForPort(port, host, timeoutMs) {
+  return new Promise((resolve) => {
+    const start = Date.now()
+
+    const attempt = () => {
+      // Backend crash lúc khởi động -> đừng chờ hết 90 giây vô ích
+      if (shouldSpawnBackend() && !backendProcess) {
+        resolve(false)
+        return
+      }
+
+      const socket = net.connect(port, host)
+
+      /*
+       * Bắt buộc phải có.
+       *
+       * Nếu firewall chặn kiểu DROP (không trả RST), 'error' sẽ không bao
+       * giờ bắn và vòng lặp retry đứng im vĩnh viễn.
+       */
+      socket.setTimeout(2000)
+
+      const retry = () => {
+        socket.destroy()
+
+        if (Date.now() - start > timeoutMs) {
+          resolve(false)
+        } else {
+          setTimeout(attempt, 500)
+        }
+      }
+
+      socket.once('connect', () => {
+        socket.destroy()
+        resolve(true)
+      })
+
+      socket.once('timeout', retry)
+      socket.once('error', retry)
+    }
+
+    attempt()
+  })
+}
+
+// ============================================================
+// TRẠNG THÁI CỬA SỔ
+// ============================================================
 
 function getWindowStateFilePath() {
   return join(app.getPath('userData'), 'katoba-window-state.json')
@@ -168,9 +401,9 @@ function getWindowFromEvent(event) {
 function isMainWindowRenderer(webContents) {
   return Boolean(
     mainWindow &&
-    !mainWindow.isDestroyed() &&
-    webContents &&
-    webContents.id === mainWindow.webContents.id
+      !mainWindow.isDestroyed() &&
+      webContents &&
+      webContents.id === mainWindow.webContents.id
   )
 }
 
@@ -395,6 +628,31 @@ function registerWindowControlHandlers() {
 }
 
 /*
+ * Renderer hỏi cổng backend qua đây thay vì viết cứng URL.
+ * Đổi BACKEND_PORT ở trên là cả ba tầng cùng đổi theo.
+ */
+function registerBackendHandlers() {
+  ipcMain.removeHandler('backend:get-endpoint')
+  ipcMain.removeHandler('backend:is-running')
+
+  ipcMain.handle('backend:get-endpoint', (event) => {
+    if (!isMainWindowRenderer(event.sender)) {
+      throw new Error('Nguồn yêu cầu không hợp lệ.')
+    }
+
+    return {
+      host: BACKEND_HOST,
+      port: BACKEND_PORT,
+      wsJa: `ws://${BACKEND_HOST}:${BACKEND_PORT}/ws/audio/ja`,
+      wsVi: `ws://${BACKEND_HOST}:${BACKEND_PORT}/ws/audio/vi`,
+      httpBase: `http://${BACKEND_HOST}:${BACKEND_PORT}`
+    }
+  })
+
+  ipcMain.handle('backend:is-running', () => Boolean(backendProcess))
+}
+
+/*
  * Cấp quyền microphone cho cửa sổ chính.
  */
 function configureMediaPermissions() {
@@ -604,6 +862,16 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  /*
+   * Instance thứ hai: app.quit() ở đầu file KHÔNG dừng module,
+   * nên nếu không chặn ở đây thì nó vẫn chạy tiếp và spawn thêm
+   * một backend nữa trước khi thoát — đúng thứ single instance lock
+   * sinh ra để tránh.
+   */
+  if (!gotSingleInstanceLock) {
+    return
+  }
+
   electronApp.setAppUserModelId('com.kakusin.katoba-bridge-ai')
 
   app.on('browser-window-created', (_, window) => {
@@ -617,8 +885,23 @@ app.whenReady().then(async () => {
   configureMediaPermissions()
   registerDesktopCaptureHandler()
   registerWindowControlHandlers()
+  registerBackendHandlers()
 
   await requestMacPermissions()
+
+  if (shouldSpawnBackend()) {
+    if (startBackend()) {
+      const ready = await waitForPort(BACKEND_PORT, BACKEND_HOST, BACKEND_READY_TIMEOUT_MS)
+
+      if (ready) {
+        console.log(`✅ Backend sẵn sàng ở cổng ${BACKEND_PORT}.`)
+      } else {
+        console.error(
+          `❌ Backend không mở cổng ${BACKEND_PORT} sau ${BACKEND_READY_TIMEOUT_MS / 1000}s.`
+        )
+      }
+    }
+  }
 
   createWindow()
 
@@ -636,6 +919,8 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', () => {
+  isQuitting = true
+
   stopResizeLoop()
 
   if (saveWindowStateTimer) {
@@ -647,9 +932,19 @@ app.on('before-quit', () => {
   ipcMain.removeHandler('window:toggle-maximize')
   ipcMain.removeHandler('window:get-state')
   ipcMain.removeHandler('window:set-always-on-top')
+  ipcMain.removeHandler('backend:get-endpoint')
+  ipcMain.removeHandler('backend:is-running')
 
   ipcMain.removeAllListeners('window:minimize')
   ipcMain.removeAllListeners('window:close')
   ipcMain.removeAllListeners('window:start-resize')
   ipcMain.removeAllListeners('window:stop-resize')
+
+  stopBackend()
+})
+
+// Lưới an toàn: đảm bảo backend bị tắt kể cả khi app thoát bất thường.
+app.on('will-quit', () => {
+  isQuitting = true
+  stopBackend()
 })

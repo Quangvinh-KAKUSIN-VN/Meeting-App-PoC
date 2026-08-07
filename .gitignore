@@ -1,27 +1,60 @@
+# ============================================================
 # Backend Python
+# ============================================================
 backend/venv/
 backend/.venv/
 backend/__pycache__/
-backend/transcript_log.txt
+**/__pycache__/
+*.py[cod]
 
-# AI model
+# PyInstaller — build/ là thư mục tạm, dist/ chứa main.exe đã đóng gói.
+# Cả hai đều vài trăm MB vì gom cả model và toàn bộ site-packages.
+backend/build/
+backend/dist/
+*.manifest
+
+# Nội dung phát ngôn trong cuộc họp — TUYỆT ĐỐI không commit.
+# File hiện tại đã 344 KB, xem mục "Cần xử lý" bên dưới.
+backend/transcript_log.txt
+backend/*.log
+
+# ============================================================
+# AI model — quá lớn cho Git, phân phối qua release/network share
+# ============================================================
 backend/models/
 backend/sense-voice/
 *.onnx
+*.bin
 *.tar.bz2
+*.zip
 
+
+Output/
+*.exe
+*.msi
+
+# ============================================================
 # Frontend
+# ============================================================
 frontend/node_modules/
 frontend/out/
 frontend/dist/
 frontend/build/
+frontend/.vite/
+.history/
 
+# ============================================================
 # Environment
+# ============================================================
 .env
 .env.*
+!.env.example
 
+# ============================================================
 # IDE và hệ điều hành
+# ============================================================
 .vscode/
 .idea/
 Thumbs.db
 .DS_Store
+desktop.ini

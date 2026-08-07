@@ -1,5 +1,36 @@
 const TARGET_SAMPLE_RATE = 16000
 
+/*
+ * Kích thước buffer của ScriptProcessor.
+ *
+ * 1024 mẫu @16kHz = 64ms, thay vì 2048 = 128ms.
+ * Tiết kiệm 64ms độ trễ E2E miễn phí (BUG-033).
+ *
+ * Không hạ xuống 512: máy test B (i5-8250U, không GPU)
+ * sẽ bắt đầu rớt chunk.
+ */
+const PROCESSOR_BUFFER_SIZE = 1024
+
+/*
+ * Tần số cắt của bộ lọc chống aliasing.
+ *
+ * Nyquist của 16kHz là 8kHz. Cắt ở 7.5kHz để có khoảng
+ * chuyển tiếp cho bộ lọc biquad bậc 2 (dốc thoải).
+ */
+const ANTI_ALIAS_HZ = 7500
+
+/*
+ * Bộ khử nhiễu của hệ điều hành được tối ưu cho TAI NGƯỜI NGHE,
+ * không phải cho ASR — nó có thể xén mất phần xát yếu (s, x, ch)
+ * vốn là thứ ASR cần để phân biệt phụ âm.
+ *
+ * Lớp noise gate bên dưới đã tự xử lý tiếng nền rồi.
+ *
+ * Đặt false rồi đo CER hai bên trước khi chốt. Với nhiễu nhà máy
+ * SNR 15dB thì bật lại có thể có lợi — phải đo mới biết.
+ */
+const USE_OS_NOISE_SUPPRESSION = true
+
 export class AudioStreamer {
   constructor(websocketUrl, onTextReceived) {
     this.websocketUrl = websocketUrl
@@ -17,6 +48,9 @@ export class AudioStreamer {
     this.highPassFilter = null
     this.lowPassFilter = null
     this.compressor = null
+
+    // Dùng cho system audio — xem ghi chú ở setupAudioPipeline()
+    this.antiAliasFilter = null
 
     this.sourceType = 'system'
 
@@ -67,7 +101,9 @@ export class AudioStreamer {
    * ?source=system
    * ?source=microphone
    *
-   * Backend dùng thông tin này để chọn bộ VAD phù hợp.
+   * Backend đọc tham số này để chọn profile VAD:
+   * system dùng ngưỡng thấp (âm thanh Zoom/Teams khá sạch),
+   * microphone dùng ngưỡng cao hơn (phòng ồn, tiếng máy).
    */
   getWebSocketUrl() {
     try {
@@ -180,10 +216,7 @@ export class AudioStreamer {
          */
         echoCancellation: false,
 
-        /*
-         * Giữ lọc nhiễu của hệ điều hành.
-         */
-        noiseSuppression: true,
+        noiseSuppression: USE_OS_NOISE_SUPPRESSION,
 
         /*
          * Quan trọng:
@@ -302,6 +335,7 @@ export class AudioStreamer {
    * Pipeline System Audio:
    *
    * MediaStream
+   * → Anti-alias low-pass 7.5 kHz   ← MỚI
    * → Processor
    * → Resample 16 kHz
    * → PCM16
@@ -311,7 +345,7 @@ export class AudioStreamer {
    *
    * MediaStream
    * → High-pass 100 Hz
-   * → Low-pass 7 kHz
+   * → Low-pass 7 kHz                (đã có sẵn tác dụng chống aliasing)
    * → Compressor
    * → Noise gate
    * → Resample 16 kHz
@@ -339,14 +373,22 @@ export class AudioStreamer {
       await this.audioContext.resume()
     }
 
+    /*
+     * Chromium thường cấp đúng 16 kHz, nhưng Bluetooth và một số
+     * audio interface thì không. Khi đó resampleAudio() bên dưới
+     * mới thật sự chạy — và bộ lọc chống aliasing trở nên bắt buộc.
+     */
+    if (this.audioContext.sampleRate !== TARGET_SAMPLE_RATE) {
+      console.warn(
+        `⚠️ AudioContext chạy ${this.audioContext.sampleRate} Hz, ` +
+          `sẽ tự hạ mẫu xuống ${TARGET_SAMPLE_RATE} Hz.`
+      )
+    }
+
     this.source = this.audioContext.createMediaStreamSource(this.mediaStream)
 
-    this.processor = this.audioContext.createScriptProcessor(2048, 1, 1)
+    this.processor = this.audioContext.createScriptProcessor(PROCESSOR_BUFFER_SIZE, 1, 1)
 
-    /*
-     * Chỉ áp dụng bộ lọc cho microphone.
-     * System Audio đang hoạt động tốt nên giữ nguyên.
-     */
     if (this.sourceType === 'microphone') {
       this.createMicrophoneFilters()
 
@@ -358,7 +400,32 @@ export class AudioStreamer {
 
       this.compressor.connect(this.processor)
     } else {
-      this.source.connect(this.processor)
+      /*
+       * System audio TRƯỚC ĐÂY nối thẳng source → processor,
+       * không qua bộ lọc nào.
+       *
+       * Vấn đề: khi hạ mẫu xuống 16 kHz, mọi thành phần trên 8 kHz
+       * bị GẬP NGƯỢC (alias) vào dải nghe được thay vì bị loại bỏ.
+       *
+       * Vùng bị nhiễu chính là 6–8 kHz, nơi mang năng lượng của
+       * phần xát và burst — thứ dùng để phân biệt d/gi/v và phụ âm
+       * cuối t/c, n/ng trong tiếng Việt.
+       *
+       * Đường microphone vốn đã được lowPassFilter 7 kHz che chắn.
+       * Đường system audio thì không — mà đây lại là đường dùng cho
+       * Zoom/Teams/Meet, tức use case chính của sản phẩm.
+       */
+      this.antiAliasFilter = this.audioContext.createBiquadFilter()
+
+      this.antiAliasFilter.type = 'lowpass'
+
+      this.antiAliasFilter.frequency.value = ANTI_ALIAS_HZ
+
+      this.antiAliasFilter.Q.value = 0.707
+
+      this.source.connect(this.antiAliasFilter)
+
+      this.antiAliasFilter.connect(this.processor)
     }
 
     this.processor.onaudioprocess = (event) => {
@@ -407,7 +474,10 @@ export class AudioStreamer {
 
     this.gainNode.connect(this.audioContext.destination)
 
-    console.log(`🎧 AudioContext: ${this.audioContext.sampleRate} Hz`)
+    console.log(
+      `🎧 AudioContext: ${this.audioContext.sampleRate} Hz, ` +
+        `buffer ${PROCESSOR_BUFFER_SIZE} mẫu`
+    )
   }
 
   /**
@@ -432,8 +502,9 @@ export class AudioStreamer {
     /*
      * Lọc bớt tiếng rít và nhiễu cao.
      *
-     * Audio gửi sang ASR là 16 kHz,
-     * nên tần số hữu ích tối đa gần 8 kHz.
+     * Audio gửi sang ASR là 16 kHz nên Nyquist là 8 kHz.
+     * Bộ lọc này đồng thời đóng vai trò chống aliasing
+     * cho đường microphone.
      */
     this.lowPassFilter = this.audioContext.createBiquadFilter()
 
@@ -549,6 +620,17 @@ export class AudioStreamer {
     return inputData
   }
 
+  /**
+   * Hạ mẫu bằng NỘI SUY TUYẾN TÍNH.
+   *
+   * Bản cũ lấy trung bình cộng một cửa sổ mẫu — đó là box filter,
+   * đáp tuyến tần số là hàm sinc, dốc cắt rất thoải và rò rỉ mạnh.
+   *
+   * Nội suy tuyến tính méo ít hơn, nhưng BẮT BUỘC phải có bộ lọc
+   * low-pass đứng trước (xem antiAliasFilter / lowPassFilter).
+   * Thiếu bộ lọc đó thì nội suy tuyến tính còn để lọt alias
+   * nhiều hơn cả box filter — hai thứ phải đi cùng nhau.
+   */
   resampleAudio(inputData, inputSampleRate, outputSampleRate) {
     if (!inputData || inputData.length === 0) {
       return new Float32Array(0)
@@ -560,28 +642,23 @@ export class AudioStreamer {
 
     const ratio = inputSampleRate / outputSampleRate
 
-    const outputLength = Math.max(1, Math.round(inputData.length / ratio))
+    const outputLength = Math.max(1, Math.floor(inputData.length / ratio))
 
     const outputData = new Float32Array(outputLength)
 
+    const lastIndex = inputData.length - 1
+
     for (let outputIndex = 0; outputIndex < outputLength; outputIndex += 1) {
-      const startIndex = Math.floor(outputIndex * ratio)
+      const position = outputIndex * ratio
 
-      const endIndex = Math.min(inputData.length, Math.floor((outputIndex + 1) * ratio))
+      const lowerIndex = Math.floor(position)
 
-      if (endIndex <= startIndex) {
-        outputData[outputIndex] = inputData[Math.min(startIndex, inputData.length - 1)]
+      const upperIndex = Math.min(lowerIndex + 1, lastIndex)
 
-        continue
-      }
+      const fraction = position - lowerIndex
 
-      let total = 0
-
-      for (let inputIndex = startIndex; inputIndex < endIndex; inputIndex += 1) {
-        total += inputData[inputIndex]
-      }
-
-      outputData[outputIndex] = total / (endIndex - startIndex)
+      outputData[outputIndex] =
+        inputData[lowerIndex] * (1 - fraction) + inputData[upperIndex] * fraction
     }
 
     return outputData
@@ -620,6 +697,16 @@ export class AudioStreamer {
       }
 
       this.source = null
+    }
+
+    if (this.antiAliasFilter) {
+      try {
+        this.antiAliasFilter.disconnect()
+      } catch (error) {
+        console.warn('Không thể ngắt anti-alias filter:', error)
+      }
+
+      this.antiAliasFilter = null
     }
 
     if (this.highPassFilter) {

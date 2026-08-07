@@ -1,12 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <title>Meeting App PoC</title>
-    <!-- Cho phép kết nối WebSocket tới Python Backend tại port 8000 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KaTOBA BridgeAI</title>
+
+    <!--
+      Content Security Policy
+
+      connect-src dùng wildcard cổng (127.0.0.1:*) thay vì ghi cứng số cổng.
+
+      Lý do: CSP là chuỗi tĩnh trong HTML, không đọc được biến. Ghi cứng
+      8000 ở đây trong khi backend đã đổi sang 8765 khiến Chromium chặn
+      WebSocket TRƯỚC khi kết nối được tạo — onerror bắn ngay và app báo
+      "Không thể kết nối tới backend", dù backend hoàn toàn bình thường.
+
+      Wildcard vẫn chặt vì đã khoá ở 127.0.0.1: chỉ cho phép kết nối tới
+      chính máy này, không mở ra mạng ngoài.
+
+      Nguồn sự thật cho cổng là BACKEND_PORT trong electron/main/index.js,
+      truyền xuống Python qua biến môi trường KATOBA_PORT.
+
+      http://127.0.0.1:* để renderer gọi được /v1/health và /v1/models.
+    -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://127.0.0.1:8000;"
+      content="
+        default-src 'self';
+        script-src 'self';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: blob:;
+        media-src 'self' blob:;
+        font-src 'self' data:;
+        connect-src 'self' ws://127.0.0.1:* http://127.0.0.1:*;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'none';
+        frame-ancestors 'none';
+      "
     />
   </head>
   <body>
