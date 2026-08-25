@@ -218,8 +218,6 @@ defineEmits([
 
   overflow-y: auto;
 
-  border: 1px solid rgba(168, 162, 158, 0.24);
-
   border-radius: 14px;
 
   background: rgba(15, 13, 12, 0.96);

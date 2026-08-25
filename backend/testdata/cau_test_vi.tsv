@@ -1,0 +1,39 @@
+# Bộ câu test tiếng VIỆT — bạn tự đọc từng câu (nói tự nhiên như lúc họp,
+# thuật ngữ tiếng Anh cứ phát âm kiểu Việt bình thường), thu WAV 16kHz mono,
+# đặt tên đúng cột 1, bỏ vào một thư mục rồi chạy:
+#   python eval_terms.py --lang vi --wav-dir <thư_mục_wav> --sentences testdata/cau_test_vi.tsv
+# Chưa thu đủ cũng chạy được — thu được bao nhiêu đo bấy nhiêu.
+# Hai câu cuối KHÔNG có thuật ngữ, cài bẫy "ai / cam kết / lỗi hẹn"
+# (đối chứng: app không được tự đổi từ thường thành thuật ngữ).
+vi_01.wav	Chiều nay em deploy code lên staging nhé.
+vi_02.wav	Server production đang bị lỗi rồi anh ơi.
+vi_03.wav	Anh xem giúp em cái log của backend với.
+vi_04.wav	Em vừa tạo pull request, anh review giúp em nhé.
+vi_05.wav	Merge xong nhớ chạy test lại nha.
+vi_06.wav	Commit này bị conflict với branch chính.
+vi_07.wav	Cuối tuần này mình release version mới.
+vi_08.wav	Build trên Jenkins đang đỏ, ai đó fix giúp em với.
+vi_09.wav	Database hôm qua phải restore từ backup.
+vi_10.wav	API trả về error liên tục luôn.
+vi_11.wav	Frontend gọi endpoint mới chưa được.
+vi_12.wav	Docker container cứ bị khởi động lại hoài.
+vi_13.wav	Deploy lên Kubernetes lâu hơn bình thường.
+vi_14.wav	Nhớ update cái config trước khi chạy.
+vi_15.wav	Em quên password của account admin rồi.
+vi_16.wav	Login vào trang admin bị lỗi token.
+vi_17.wav	Task này em kéo qua sprint sau nhé.
+vi_18.wav	Backlog còn nhiều ticket chưa xử lý.
+vi_19.wav	Deadline của dự án là cuối tháng này.
+vi_20.wav	Chiều nay có meeting với khách hàng.
+vi_21.wav	Anh gửi agenda qua Slack giúp em.
+vi_22.wav	File Excel đó em share qua Google Drive rồi.
+vi_23.wav	Em hỏi ChatGPT cách viết query SQL.
+vi_24.wav	Cache bị đầy nên phải xóa thủ công.
+vi_25.wav	Memory của server đang cao quá.
+vi_26.wav	Team mình họp daily scrum mỗi sáng.
+vi_27.wav	Spec của tính năng này chưa rõ ràng lắm.
+vi_28.wav	Em đang refactor lại module thanh toán.
+vi_29.wav	Upload file lên cloud xong gửi link cho em.
+vi_30.wav	Hotfix đã lên production tối qua rồi.
+vi_31.wav	Ai là người phụ trách phần này vậy?
+vi_32.wav	Chúng ta cam kết hoàn thành đúng tiến độ, không để lỗi hẹn với đối tác.

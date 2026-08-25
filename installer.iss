@@ -1,4 +1,4 @@
-; installer.iss — script Inno Setup cho KaTOBA
+﻿; installer.iss — script Inno Setup cho KaTOBA
 ; Cách dùng: cài Inno Setup -> mở file này bằng Inno Setup Compiler -> bấm Compile (hoặc F9)
 ; Kết quả: Output\KaTOBA-Setup.exe
 
@@ -8,7 +8,7 @@
 #define MyAppExeName "KaTOBA.exe"
 
 ; Thư mục chứa app đã build (win-unpacked). Sửa nếu đặt project chỗ khác.
-#define SourceDir "D:\AI_Translator\Meeting-App-PoC\frontend\dist\win-unpacked"
+#define SourceDir "C:\Users\NguyenQuangVinh\Meeting-App-PoC\frontend\dist\win-unpacked"
 
 [Setup]
 AppId={{2F7A91C4-6B3D-4E18-A5F2-KATOBAAPP001}

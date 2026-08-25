@@ -287,7 +287,7 @@ button {
 .app-root {
   width: 100%;
   height: 100%;
-  padding: 8px;
+  padding: 0;
 
   color: #fafaf9;
 
@@ -308,10 +308,6 @@ button {
   flex-direction: column;
 
   overflow: hidden;
-
-  border: 1px solid rgba(168, 162, 158, 0.24);
-
-  border-radius: 18px;
 
   background: linear-gradient(
     145deg,

@@ -1,0 +1,37 @@
+# Bộ câu test tiếng NHẬT — người Nhật (giọng bản xứ) đọc từng câu, thu thành
+# file WAV 16kHz mono, đặt tên đúng cột 1, bỏ vào một thư mục rồi chạy:
+#   python eval_terms.py --lang ja --wav-dir <thư_mục_wav> --sentences testdata/cau_test_ja.tsv
+# Chưa thu đủ cũng chạy được — thu được bao nhiêu đo bấy nhiêu.
+# Hai câu cuối KHÔNG có thuật ngữ (đối chứng: app không được tự bịa thuật ngữ).
+ja_01.wav	明日の朝にデプロイします。
+ja_02.wav	サーバーのログを確認してください。
+ja_03.wav	データベースのバックアップは毎晩取っています。
+ja_04.wav	このバグはフロントエンドの問題だと思います。
+ja_05.wav	プルリクエストのレビューをお願いします。
+ja_06.wav	マージする前にコンフリクトを解決してください。
+ja_07.wav	コミットメッセージは英語で書いてください。
+ja_08.wav	新しいブランチを作って作業してください。
+ja_09.wav	金曜日にリリースする予定です。
+ja_10.wav	ドッカーのイメージをビルドしています。
+ja_11.wav	ステージングで確認してから本番環境にデプロイします。
+ja_12.wav	ロールバックの手順を教えてください。
+ja_13.wav	エーピーアイのエンドポイントが変わりました。
+ja_14.wav	単体テストが失敗しています。
+ja_15.wav	結合テストは来週から始めます。
+ja_16.wav	仕様書を確認してから実装します。
+ja_17.wav	スラックで資料を送ります。
+ja_18.wav	ジラのチケットを見てください。
+ja_19.wav	朝会を先に済ませましょう。
+ja_20.wav	スプリントのバックログを整理しましょう。
+ja_21.wav	デッドラインは今月末です。
+ja_22.wav	エクセルのファイルをメールで送ってください。
+ja_23.wav	チャットGPTで議事録を要約しました。
+ja_24.wav	パスワードをリセットしてもらえますか。
+ja_25.wav	ログインできないユーザーがいます。
+ja_26.wav	キャッシュをクリアすると直るかもしれません。
+ja_27.wav	メモリの使用量が高すぎます。
+ja_28.wav	クラウドはエーダブリューエスを使っています。
+ja_29.wav	ホットフィックスを今日中に出します。
+ja_30.wav	リファクタリングは次のスプリントでやります。
+ja_31.wav	今日はいい天気ですね。
+ja_32.wav	お昼ご飯は何を食べましたか。

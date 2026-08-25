@@ -9,6 +9,35 @@ KaTOBA BridgeAI — Module hậu xử lý (Python thuần, KHÔNG dùng model AI
   BUG-031  dấu thập phân theo locale                   (0,3% <-> 0.3%)
   BUG-016  loại trùng khi có tiếng vọng
 
+MỚI (nâng cấp thuật ngữ chuyên ngành):
+  TERM-01  sửa thuật ngữ NGAY TRÊN TEXT NGUỒN sau ASR, trước khi dịch.
+           ASR tiếng Việt nghe "đíp lôi" -> đổi thành "deploy" rồi mới dịch.
+           ASR tiếng Nhật nghe デプロイ/デプロー -> đổi thành "deploy".
+  TERM-02  ép thuật ngữ trên BẢN DỊCH: phụ đề hai chiều đều giữ nguyên
+           chữ tiếng Anh ("deploy", "Docker"...) theo yêu cầu sản phẩm.
+  TERM-03  text ASR tiếng Việt toàn CHỮ HOA -> hạ về chữ thường trước khi
+           đưa vào M2M-100 (model dịch xử lý chữ hoa kém hơn đáng kể).
+  TERM-04  cleanup tiếng Nhật không được xoá dấu cách GIỮA hai từ Latin
+           ("pull request" không được thành "pullrequest").
+
+Schema glossary.json MỚI (mỗi mục):
+  {
+    "term":     "deploy",              # bản chuẩn hiển thị, thường là tiếng Anh
+    "ja_hears": ["デプロイ", "デプロー"], # các dạng ASR tiếng Nhật nghe ra
+    "vi_hears": ["đíp lôi", "đi lôi"],  # các dạng ASR tiếng Việt nghe ra
+    "ja_bad":   ["展開", "配置"],        # bản dịch tiếng Nhật sai cần thay
+    "vi_bad":   ["triển khai"],         # bản dịch tiếng Việt sai cần thay
+    "ja_guard": [],                     # cụm chứa ja_bad nhưng KHÔNG được thay
+    "vi_guard": ["xin lỗi"]             # cụm chứa vi_bad nhưng KHÔNG được thay
+  }
+Loader vẫn đọc được schema cũ (ja/vi/ja_variants/vi_variants) để không vỡ
+nếu ai đó còn giữ file glossary đời trước.
+
+QUAN TRỌNG khi thêm vi_hears: chỉ điền các chuỗi "phiên âm tiếng Anh"
+gần như không thể là tiếng Việt thật ("sơ vơ", "đíp lôi"). KHÔNG BAO GIỜ
+điền từ tiếng Việt có nghĩa thật ("triển khai", "cam kết") vào vi_hears —
+những từ đó thuộc vi_bad, chỉ được thay khi câu nguồn có thuật ngữ tương ứng.
+
 KHÔNG đóng được BUG-007 (kế thừa ngữ cảnh giữa segment).
 M2M-100 là encoder-decoder, không nhận prompt, không tuân theo chỉ dẫn.
 Giải đại từ 「それ」 cần model khác — đừng ghi bug đó vào file này.
@@ -194,31 +223,194 @@ def fix_decimal_locale(text: str, tgt_lang: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# 3. TỪ ĐIỂN THUẬT NGỮ (BUG-008)
+# 3. TỪ ĐIỂN THUẬT NGỮ (BUG-008, TERM-01, TERM-02)
 # ---------------------------------------------------------------------------
+
+def _is_ascii(s: str) -> bool:
+    return all(ord(c) < 128 for c in s)
+
+
+def _is_acronym(text: str) -> bool:
+    """
+    "AI", "OK", "API", "CI/CD"... — chữ hoa toàn phần.
+
+    Các từ này BẮT BUỘC khớp phân biệt hoa-thường: text ASR tiếng Việt được
+    hạ hết về chữ thường trước khi sửa, nếu khớp không phân biệt thì "AI"
+    sẽ nuốt mất đại từ "ai" của tiếng Việt ("ai là người phụ trách" ->
+    "AI là người phụ trách"). Muốn ASR bắt được acronym, hãy điền dạng
+    chữ thường AN TOÀN vào vi_hears ("api", "url"... — trừ "ai").
+    """
+    return (_is_ascii(text) and len(text) >= 2 and text.upper() == text
+            and any(c.isalpha() for c in text))
+
+
+def _compile_pattern(text: str, side: str) -> re.Pattern:
+    """
+    Chọn kiểu ranh giới theo bản chất chuỗi cần khớp:
+
+    - Chuỗi thuần ASCII ("deploy", "CI/CD"): ranh giới là "không dính chữ/số
+      ASCII". KHÔNG dùng \\w vì kanji/kana cũng là \\w — "明日deployします"
+      phải khớp được dù chữ Latin đứng sát kanji. Acronym toàn chữ hoa
+      khớp phân biệt hoa-thường (xem _is_acronym).
+    - Chuỗi tiếng Việt có dấu ("triển khai"): ranh giới \\w chuẩn,
+      không phân biệt hoa thường.
+    - Chuỗi kana/kanji (デプロイ): khớp thẳng, tiếng Nhật không có dấu cách.
+    """
+    if _is_ascii(text):
+        flags = 0 if _is_acronym(text) else re.IGNORECASE
+        return re.compile(
+            rf"(?<![A-Za-z0-9]){re.escape(text)}(?![A-Za-z0-9])", flags)
+    if side == "vi":
+        return re.compile(rf"(?<!\w){re.escape(text)}(?!\w)", re.IGNORECASE)
+    return re.compile(re.escape(text))
+
+
+_PLACEHOLDER = re.compile("\x02(\\d+)\x02")
+
+
+def _protected_replace(text: str,
+                       guards: list[tuple[re.Pattern, int]],
+                       canonicals: list[re.Pattern],
+                       replacements: list[tuple[re.Pattern, str, int]]) -> tuple[str, int]:
+    """
+    Máy thay thế dùng chung cho cả hai tầng, xử lý đúng ba ca chồng lấn:
+
+      A) chuỗi sai DÀI chứa bản chuẩn NGẮN ("chi nhánh" ⊃ "nhánh")
+         -> vẫn PHẢI thay: chỉ bỏ qua match nằm TRỌN trong vùng bản chuẩn,
+            match bao trùm ra ngoài thì được phép ăn cả cụm.
+      B) bản chuẩn chứa chuỗi sai ("khuôn dập" ⊃ "khuôn")
+         -> match nằm trọn trong vùng bản chuẩn -> bỏ qua,
+            nếu không sẽ ra "khuôn dập dập".
+      C) chuỗi sai là mảnh của cụm khác ("lỗi" trong "xin lỗi")
+         -> cụm trong `guards` bị đóng băng hẳn bằng placeholder.
+
+    `guards`/`replacements` mang kèm độ dài CHUỖI GỐC để sắp dài-trước-ngắn
+    (không dùng độ dài regex — phần bọc ranh giới ASCII dài hơn phần bọc \\w
+    sẽ làm sai thứ tự).
+
+    Placeholder \\x02N\\x02 là ký tự điều khiển không bao giờ có trong text
+    thật; pattern sau không thể khớp xuyên qua placeholder; cuối cùng bung ra.
+    Trả (text mới, số lần thay thật sự).
+    """
+    if not text:
+        return text, 0
+
+    slots: list[str] = []
+
+    def _freeze(m: re.Match) -> str:
+        slots.append(m.group(0))          # giữ nguyên văn
+        return f"\x02{len(slots) - 1}\x02"
+
+    for pat, _n in sorted(guards, key=lambda gn: gn[1], reverse=True):
+        text = pat.sub(_freeze, text)
+
+    replaced = 0
+
+    def _swap_factory(canonical: str, blocked: list[tuple[int, int]]):
+        def _swap(m: re.Match) -> str:
+            nonlocal replaced
+            s, e = m.span()
+            # ca B: match nằm trọn trong một bản chuẩn có sẵn -> để yên
+            if any(bs <= s and e <= be for bs, be in blocked):
+                return m.group(0)
+            replaced += 1
+            slots.append(canonical)       # thay bằng bản chuẩn
+            return f"\x02{len(slots) - 1}\x02"
+        return _swap
+
+    # dài trước ngắn sau (ca A)
+    for pat, canonical, _n in sorted(replacements,
+                                     key=lambda rc: rc[2], reverse=True):
+        # vùng bản chuẩn tính lại trên text hiện tại của từng lượt
+        blocked = [m.span() for cp in canonicals for m in cp.finditer(text)]
+        text = pat.sub(_swap_factory(canonical, blocked), text)
+
+    text = _PLACEHOLDER.sub(lambda m: slots[int(m.group(1))], text)
+    return text, replaced
+
 
 class Glossary:
     """
-    Ép thuật ngữ sau khi dịch. Nguyên tắc: CHỈ thay biến thể sai bằng bản
-    chuẩn — không bao giờ chèn thêm từ vào câu dịch. Chèn thêm dễ tạo câu
-    vô nghĩa hơn là để nguyên.
+    Từ điển thuật ngữ hai tầng.
+
+    Tầng 1 — fix_source(): chạy NGAY SAU ASR. Mọi dạng "nghe ra"
+    (ja_hears / vi_hears / chính term viết sai hoa-thường) được đưa về
+    bản chuẩn `term` trước khi text vào bộ dịch. Chữ Latin đi qua M2M-100
+    thường được giữ nguyên, nên đây là tầng quyết định.
+
+    Tầng 2 — apply(): chạy SAU KHI DỊCH, làm lưới an toàn. Chỉ kích hoạt
+    khi câu NGUỒN thực sự chứa thuật ngữ (bản chuẩn hoặc dạng nghe-ra),
+    khi đó các bản dịch sai (vi_bad / ja_bad, kể cả katakana lọt sang)
+    trong câu ĐÍCH bị thay bằng bản chuẩn. Điều kiện-theo-nguồn giữ cho
+    từ thường ("cam kết", "kiểm tra") không bao giờ bị đụng tới khi người
+    nói thật sự dùng chúng theo nghĩa thường.
     """
 
     def __init__(self, entries: list[dict]):
         self.entries = []
         for e in entries:
-            ja, vi = e.get("ja", "").strip(), e.get("vi", "").strip()
-            if not ja or not vi:
-                continue
-            self.entries.append({
-                "ja": ja,
-                "vi": vi,
-                "ja_variants": [v for v in e.get("ja_variants", []) if v and v != ja],
-                "vi_variants": [v for v in e.get("vi_variants", []) if v and v != vi],
-                # cụm được bảo vệ: biến thể nằm trong đây thì KHÔNG thay
-                "ja_guard": list(e.get("ja_guard", [])),
-                "vi_guard": list(e.get("vi_guard", [])),
-            })
+            norm = self._normalize_entry(e)
+            if norm:
+                self.entries.append(norm)
+        self._compile()
+
+    # ----------------------------------------------------------- nạp/chuẩn hoá
+
+    @staticmethod
+    def _normalize_entry(e: dict) -> dict | None:
+        """Nhận cả schema mới lẫn schema cũ (ja/vi/ja_variants/vi_variants)."""
+        term = (e.get("term") or e.get("en") or "").strip()
+
+        ja_hears = [v.strip() for v in e.get("ja_hears", []) if v and v.strip()]
+        vi_hears = [v.strip() for v in e.get("vi_hears", []) if v and v.strip()]
+        ja_bad = [v.strip() for v in e.get("ja_bad", []) if v and v.strip()]
+        vi_bad = [v.strip() for v in e.get("vi_bad", []) if v and v.strip()]
+
+        if not term and e.get("ja") and e.get("vi"):
+            # schema cũ: canonical hiển thị nằm ở e["vi"], nguồn khớp e["ja"]
+            term = e["vi"].strip()
+            ja_hears = [e["ja"].strip()] + [v for v in e.get("ja_variants", []) if v]
+            vi_bad = [v for v in e.get("vi_variants", []) if v]
+            ja_bad = [v for v in e.get("ja_variants", []) if v]
+
+        if not term:
+            return None
+
+        dedup = lambda xs: list(dict.fromkeys(x for x in xs if x and x != term))
+        return {
+            "term": term,
+            "ja_hears": dedup(ja_hears),
+            "vi_hears": dedup(vi_hears),
+            "ja_bad": dedup(ja_bad),
+            "vi_bad": dedup(vi_bad),
+            "ja_guard": [v.strip() for v in e.get("ja_guard", []) if v and v.strip()],
+            "vi_guard": [v.strip() for v in e.get("vi_guard", []) if v and v.strip()],
+        }
+
+    def _compile(self) -> None:
+        """
+        Biên dịch regex một lần lúc nạp — vòng realtime không compile lại.
+        Mỗi pattern lưu kèm độ dài chuỗi gốc để engine sắp dài-trước-ngắn.
+        """
+        for e in self.entries:
+            term_len = len(e["term"])
+            e["_term_pat"] = {
+                "ja": _compile_pattern(e["term"], "ja"),
+                "vi": _compile_pattern(e["term"], "vi"),
+            }
+            e["_term_len"] = term_len
+            e["_hears_pat"] = {
+                "ja": [(_compile_pattern(h, "ja"), len(h)) for h in e["ja_hears"]],
+                "vi": [(_compile_pattern(h, "vi"), len(h)) for h in e["vi_hears"]],
+            }
+            e["_bad_pat"] = {
+                "ja": [(_compile_pattern(b, "ja"), len(b)) for b in e["ja_bad"]],
+                "vi": [(_compile_pattern(b, "vi"), len(b)) for b in e["vi_bad"]],
+            }
+            e["_guard_pat"] = {
+                "ja": [(_compile_pattern(g, "ja"), len(g)) for g in e["ja_guard"]],
+                "vi": [(_compile_pattern(g, "vi"), len(g)) for g in e["vi_guard"]],
+            }
 
     @classmethod
     def load(cls, path: Path) -> "Glossary":
@@ -235,69 +427,66 @@ class Glossary:
             print(f"⚠️  Lỗi đọc từ điển ({err}) — chạy không từ điển")
             return cls([])
 
-    @staticmethod
-    def _finditer(text: str, term: str, vi: bool):
-        """Tiếng Việt cần ranh giới từ; tiếng Nhật không có dấu cách nên khớp thẳng."""
-        pat = rf"(?<!\w){re.escape(term)}(?!\w)" if vi else re.escape(term)
-        return list(re.finditer(pat, text, re.IGNORECASE if vi else 0))
+    # --------------------------------------------------------------- tầng 1
 
-    @classmethod
-    def _has(cls, text: str, term: str, vi: bool) -> bool:
-        return bool(cls._finditer(text, term, vi))
-
-    @classmethod
-    def _enforce(cls, dst: str, correct: str, variants: list[str],
-                 guards: list[str], vi: bool) -> tuple[str, bool]:
+    def fix_source(self, text: str, lang: str) -> tuple[str, int]:
         """
-        Thay biến thể sai bằng bản chuẩn, có kiểm tra CHỒNG LẤN.
-
-        Ba ca bắt buộc phải xử lý đúng:
-          A) biến thể chứa bản chuẩn — 'chi nhánh' ⊃ 'nhánh'  -> PHẢI thay
-          B) bản chuẩn chứa biến thể — 'khuôn dập' ⊃ 'khuôn'  -> PHẢI bỏ qua,
-             nếu không sẽ ra 'khuôn dập dập'
-          C) biến thể là một âm tiết của từ ghép khác — 'khuôn' trong 'khuôn khổ'
-             -> PHẢI bỏ qua. Tiếng Việt viết rời từng âm tiết nên \b không đủ;
-             phải liệt kê tường minh trong 'vi_guard'.
-
-        Cả ba dùng chung một cơ chế: dựng danh sách vùng CẤM ĐỘNG rồi bỏ qua
-        mọi khớp nằm trọn bên trong vùng đó.
+        Sửa thuật ngữ ngay trên text ASR (trước khi dịch).
+        'anh đã đíp lôi chưa'   -> 'anh đã deploy chưa'
+        '明日デプローします'        -> '明日deployします'
+        'chạy trên gít háp'     -> 'chạy trên GitHub'   (chuẩn hoá cả hoa-thường)
         """
-        good = [m.span() for m in cls._finditer(dst, correct, vi)]
-        blocked = list(good)
-        for gphrase in guards:
-            blocked += [m.span() for m in cls._finditer(dst, gphrase, vi)]
+        if not text or not self.entries:
+            return text, 0
 
-        for var in sorted(variants, key=len, reverse=True):
-            for m in cls._finditer(dst, var, vi):
-                s, e = m.span()
-                if any(bs <= s and e <= be for bs, be in blocked):
-                    continue                      # ca B hoặc C
-                new = correct
-                if vi and m.group(0)[:1].isupper():
-                    new = correct[:1].upper() + correct[1:]
-                return dst[:s] + new + dst[e:], True
-        return dst, bool(good)
+        guards: list[tuple[re.Pattern, int]] = []
+        repls: list[tuple[re.Pattern, str, int]] = []
+        for e in self.entries:
+            guards += e["_guard_pat"][lang]
+            for pat, n in e["_hears_pat"][lang]:
+                repls.append((pat, e["term"], n))
+            # khớp cả chính term để chuẩn hoá hoa-thường ("github" -> "GitHub")
+            repls.append((e["_term_pat"][lang], e["term"], e["_term_len"]))
+
+        # canonicals=[] : tầng nguồn không chặn theo bản chuẩn, nếu chặn thì
+        # chính phép chuẩn-hoá-hoa-thường ("github" nằm trong vùng khớp của
+        # "GitHub") sẽ tự khoá mình
+        return _protected_replace(text, guards, [], repls)
+
+    # --------------------------------------------------------------- tầng 2
 
     def apply(self, src: str, dst: str, src_lang: str, tgt_lang: str) -> tuple[str, int]:
-        """Trả (bản dịch đã sửa, số thuật ngữ đã áp)."""
+        """
+        Lưới an toàn sau dịch. Trả (bản dịch đã sửa, số thuật ngữ đã áp).
+        Chỉ những mục mà câu NGUỒN có chứa thuật ngữ mới được phép sửa câu đích.
+        """
         if not self.entries or not dst:
             return dst, 0
-        hits = 0
+
+        guards: list[tuple[re.Pattern, int]] = []
+        canonicals: list[re.Pattern] = []
+        repls: list[tuple[re.Pattern, str, int]] = []
+
         for e in self.entries:
-            if src_lang == "ja":
-                if not self._has(src, e["ja"], False) and not any(
-                        self._has(src, v, False) for v in e["ja_variants"]):
-                    continue
-                dst, hit = self._enforce(dst, e["vi"], e["vi_variants"],
-                                         e["vi_guard"], vi=True)
-            else:
-                if not self._has(src, e["vi"], True) and not any(
-                        self._has(src, v, True) for v in e["vi_variants"]):
-                    continue
-                dst, hit = self._enforce(dst, e["ja"], e["ja_variants"],
-                                         e["ja_guard"], vi=False)
-            hits += int(hit)
-        return dst, hits
+            in_src = bool(e["_term_pat"][src_lang].search(src)) or any(
+                p.search(src) for p, _n in e["_hears_pat"][src_lang])
+            if not in_src:
+                continue
+            # ca C: cụm bảo vệ đóng băng hẳn; ca B: bản chuẩn có sẵn trong
+            # câu đích chặn các match nằm trọn bên trong nó
+            guards += e["_guard_pat"][tgt_lang]
+            canonicals.append(e["_term_pat"][tgt_lang])
+            # thay: bản dịch sai phía đích + dạng nghe-ra phía nguồn lọt sang
+            # (katakana đôi khi được M2M bê nguyên xi vào câu tiếng Việt)
+            for pat, n in e["_bad_pat"][tgt_lang]:
+                repls.append((pat, e["term"], n))
+            for pat, n in e["_hears_pat"][src_lang]:
+                repls.append((pat, e["term"], n))
+
+        if not repls:
+            return dst, 0
+
+        return _protected_replace(dst, guards, canonicals, repls)
 
 
 # ---------------------------------------------------------------------------
@@ -378,6 +567,19 @@ _REPEAT_WORD = re.compile(r"\b(\w+)(?:\s+\1\b){2,}", re.IGNORECASE)
 # Đây chính là ca 'Hướng dẫn hướng dẫn' của BUG-004.
 _REPEAT_PHRASE = re.compile(r"\b((?:\w+\s+){1,3}\w+)(?:\s+\1\b)+", re.IGNORECASE)
 
+# TERM-04: dấu cách nằm GIỮA hai ký tự Latin/số phải sống sót qua cleanup ja.
+_LATIN_GAP = re.compile(r"(?<=[A-Za-z0-9]) +(?=[A-Za-z0-9])")
+
+
+def _cap_first(text: str) -> str:
+    """Viết hoa ký tự chữ đầu tiên, bỏ qua ký tự không phải chữ đứng trước."""
+    for i, ch in enumerate(text):
+        if ch.isalpha():
+            if ch.islower():
+                return text[:i] + ch.upper() + text[i + 1:]
+            return text
+    return text
+
 
 def cleanup(text: str, lang: str) -> str:
     """Cắt lặp token còn sót và chuẩn hoá khoảng trắng."""
@@ -390,10 +592,12 @@ def cleanup(text: str, lang: str) -> str:
         text = _REPEAT_PHRASE.sub(r"\1", text)
         text = re.sub(r"\s+", " ", text)
         text = re.sub(r"\s+([,.!?;:])", r"\1", text)
-        if text and text[0].islower():
-            text = text[0].upper() + text[1:]
+        text = _cap_first(text)
     else:
+        # TERM-04: đóng băng dấu cách giữa từ Latin trước khi quét sạch
+        text = _LATIN_GAP.sub("\x00", text)
         text = re.sub(r"[ \u3000]+", "", text)
+        text = text.replace("\x00", " ")
     return text.strip()
 
 
@@ -404,10 +608,26 @@ class PostProcessor:
         self.glossary = glossary
         self.cache = cache or TranslationCache()
         self.deduper = Deduper()
-        self.stats = {"dedup": 0, "glossary": 0, "cache_hit": 0}
+        self.stats = {"dedup": 0, "glossary": 0, "term_fix": 0, "cache_hit": 0}
 
     def prepare_source(self, text: str, lang: str) -> str:
-        return normalize_source(cleanup(text, lang), lang)
+        """
+        Chuỗi xử lý text NGUỒN, đúng thứ tự:
+          1. TERM-03: ASR tiếng Việt trả CHỮ HOA -> hạ hết về chữ thường
+             (làm TRƯỚC cleanup để cleanup viết hoa lại đúng chữ cái đầu câu).
+          2. cleanup: cắt lặp, chuẩn khoảng trắng.
+          3. chuẩn hoá số đọc-thành-lời -> chữ số.
+          4. TERM-01: dạng nghe-ra của thuật ngữ -> bản chuẩn tiếng Anh.
+        """
+        if lang == "vi" and text:
+            text = text.lower()
+        text = normalize_source(cleanup(text, lang), lang)
+        text, n = self.glossary.fix_source(text, lang)
+        if n:
+            self.stats["term_fix"] += n
+            if lang == "vi":
+                text = _cap_first(text)   # phòng khi thuật ngữ đứng đầu câu
+        return text
 
     def is_duplicate(self, text: str) -> bool:
         dup = self.deduper.is_duplicate(text)
@@ -419,4 +639,7 @@ class PostProcessor:
         dst = cleanup(dst, tgt_lang)
         dst, hits = self.glossary.apply(src, dst, src_lang, tgt_lang)
         self.stats["glossary"] += hits
-        return fix_decimal_locale(dst, tgt_lang)
+        dst = fix_decimal_locale(dst, tgt_lang)
+        if tgt_lang == "vi":
+            dst = _cap_first(dst)
+        return dst
