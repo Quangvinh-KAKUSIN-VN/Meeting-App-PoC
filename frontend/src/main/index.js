@@ -4,6 +4,7 @@ import {
   BrowserWindow,
   ipcMain,
   desktopCapturer,
+  dialog,
   session,
   systemPreferences,
   screen
@@ -106,6 +107,32 @@ const BACKEND_READY_TIMEOUT_MS = 90000
 // PyInstaller sinh main.exe trên Windows, main (không đuôi) trên macOS/Linux.
 const BACKEND_EXE = IS_WINDOWS ? 'main.exe' : 'main'
 
+/*
+ * Vài dòng cuối backend in ra trước khi chết.
+ *
+ * Trong bản đóng gói, console.log của main process không hiện ở đâu cả trừ
+ * khi người dùng mở app từ Terminal — thứ không ai làm. Không giữ lại output
+ * thì mọi lỗi khởi động (thiếu model, thiếu dylib, bị Gatekeeper giết) đều
+ * quy về một triệu chứng duy nhất: "backend không lên".
+ */
+const BACKEND_OUTPUT_KEEP_LINES = 40
+let backendOutput = []
+let backendFailureReported = false
+
+function recordBackendOutput(chunk) {
+  const text = chunk.toString().trim()
+
+  if (!text) {
+    return
+  }
+
+  backendOutput.push(text)
+
+  if (backendOutput.length > BACKEND_OUTPUT_KEEP_LINES) {
+    backendOutput = backendOutput.slice(-BACKEND_OUTPUT_KEEP_LINES)
+  }
+}
+
 function getBackendDir() {
   if (app.isPackaged) {
     // production: electron-builder chép backend vào resources/backend (extraResources)
@@ -129,6 +156,12 @@ function startBackend() {
 
   if (!existsSync(exePath)) {
     console.error(`❌ Không tìm thấy backend tại: ${exePath}`)
+    reportBackendFailure(
+      `Không tìm thấy backend tại:\n${exePath}\n\n` +
+        'Bản đóng gói thiếu extraResources, hoặc backend chưa được build bằng ' +
+        'PyInstaller cho ĐÚNG hệ điều hành này (main.exe của Windows không chạy ' +
+        'trên macOS và ngược lại).'
+    )
     return false
   }
 
@@ -150,6 +183,17 @@ function startBackend() {
       KATOBA_PORT: String(BACKEND_PORT),
 
       /*
+       * Thư mục GHI ĐƯỢC cho backend (startup_error.log, transcript_log.txt).
+       *
+       * Mặc định main.py ghi cạnh chính nó. Trên macOS chỗ đó là
+       * KaTOBA.app/Contents/Resources/backend/ — ghi vào trong bundle đã ký
+       * sẽ PHÁ chữ ký, và trong /Applications thì thường không có quyền ghi.
+       * Kết quả: _fatal() nuốt luôn exception, backend chết câm lặng.
+       * Trên Windows cài vào Program Files cũng dính y hệt.
+       */
+      KATOBA_DATA_DIR: app.getPath('userData'),
+
+      /*
        * Ghi transcript ra đĩa mặc định TẮT.
        *
        * Nội dung họp doanh nghiệp không nên nằm dưới dạng văn bản thuần
@@ -161,17 +205,42 @@ function startBackend() {
     }
   })
 
-  backendProcess.stdout?.on('data', (d) => console.log(`[backend] ${d.toString().trim()}`))
-  backendProcess.stderr?.on('data', (d) => console.error(`[backend-err] ${d.toString().trim()}`))
+  backendProcess.stdout?.on('data', (d) => {
+    recordBackendOutput(d)
+    console.log(`[backend] ${d.toString().trim()}`)
+  })
+
+  backendProcess.stderr?.on('data', (d) => {
+    recordBackendOutput(d)
+    console.error(`[backend-err] ${d.toString().trim()}`)
+  })
 
   backendProcess.on('error', (err) => {
     console.error(`❌ Spawn backend thất bại: ${err.message}`)
     backendProcess = null
+
+    /*
+     * EACCES ở đây gần như luôn là mất bit +x khi chép backend qua Windows
+     * hoặc qua zip. Nói thẳng cách sửa, đừng bắt người ta đoán.
+     */
+    const hint =
+      err.code === 'EACCES' && !IS_WINDOWS
+        ? `\n\nFile không có quyền thực thi. Sửa: chmod +x "${exePath}"`
+        : ''
+
+    reportBackendFailure(`Không chạy được ${exePath}\n${err.message}${hint}`)
   })
 
   backendProcess.on('exit', (code, signal) => {
     console.log(`[backend] đã thoát (code=${code}, signal=${signal})`)
     backendProcess = null
+
+    if (!isQuitting && code !== 0) {
+      reportBackendFailure(`Backend thoát bất thường (code=${code}, signal=${signal}).`, {
+        code,
+        signal
+      })
+    }
 
     /*
      * Báo cho renderer biết backend đã chết.
@@ -185,6 +254,65 @@ function startBackend() {
   })
 
   return true
+}
+
+/**
+ * Hiện lý do backend không lên, thay vì để app treo với màn hình trống.
+ *
+ * Ba nguồn thông tin, ghép lại vì mỗi kiểu chết chỉ để lại dấu ở một chỗ:
+ *   - stderr/stdout đã hứng được  -> lỗi Python (thiếu model, import fail)
+ *   - startup_error.log           -> _fatal() của main.py, còn lại sau khi chết
+ *   - signal SIGKILL, không output-> macOS giết vì chữ ký/quarantine
+ */
+function reportBackendFailure(reason, detail = {}) {
+  if (backendFailureReported || isQuitting) {
+    return
+  }
+
+  backendFailureReported = true
+
+  const lines = [reason]
+
+  // _fatal() ghi vào KATOBA_DATA_DIR; bản cũ ghi cạnh binary -> đọc cả hai.
+  const errorLogCandidates = [
+    join(app.getPath('userData'), 'startup_error.log'),
+    join(getBackendDir(), 'startup_error.log')
+  ]
+
+  for (const candidate of errorLogCandidates) {
+    try {
+      if (existsSync(candidate)) {
+        lines.push('', `--- ${candidate} ---`, readFileSync(candidate, 'utf-8').trim())
+        break
+      }
+    } catch {
+      /* không đọc được thì thôi, còn stderr bên dưới */
+    }
+  }
+
+  if (backendOutput.length) {
+    lines.push('', '--- Output của backend ---', ...backendOutput)
+  }
+
+  /*
+   * macOS giết tiến trình vì chữ ký/quarantine thì KHÔNG có stderr và cũng
+   * không có startup_error.log — signal SIGKILL là manh mối duy nhất.
+   * Không nói rõ ra thì người dùng sẽ đi tìm lỗi Python không tồn tại.
+   */
+  if (IS_MAC && detail.signal === 'SIGKILL' && !backendOutput.length) {
+    lines.push(
+      '',
+      'macOS đã giết tiến trình backend trước khi nó kịp chạy (SIGKILL, không output).',
+      'Thường do một trong hai:',
+      '  • Bundle còn cờ com.apple.quarantine  -> chạy: xattr -cr <đường dẫn>.app',
+      '  • Chữ ký không hợp lệ                 -> chạy: codesign --force --deep --sign - <đường dẫn>.app'
+    )
+  }
+
+  const message = lines.join('\n')
+  console.error(message)
+
+  dialog.showErrorBox('KaTOBA — backend không khởi động được', message)
 }
 
 function stopBackend() {
@@ -898,6 +1026,12 @@ app.whenReady().then(async () => {
       } else {
         console.error(
           `❌ Backend không mở cổng ${BACKEND_PORT} sau ${BACKEND_READY_TIMEOUT_MS / 1000}s.`
+        )
+
+        // Tiến trình chết -> handler 'exit' đã báo rồi, đừng bật hai hộp thoại.
+        reportBackendFailure(
+          `Backend không mở cổng ${BACKEND_PORT} sau ` +
+            `${BACKEND_READY_TIMEOUT_MS / 1000} giây.`
         )
       }
     }

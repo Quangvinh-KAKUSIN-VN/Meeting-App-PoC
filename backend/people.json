@@ -1,0 +1,42 @@
+{
+  "_huong_dan": [
+    "Danh sách người dự họp. Sửa file này rồi khởi động lại backend.",
+    "",
+    "Vì sao cần: M2M-100 không phân biệt danh từ riêng với từ thường, nên nó",
+    "dịch NGHĨA của kanji trong tên — 一さん thành '13', 千葉さん thành",
+    "'1.000 lá'. Khai tên ở đây thì ngay sau ASR tên được đổi sang dạng Latin,",
+    "và chữ Latin thì model chép nguyên xi qua bản dịch.",
+    "",
+    "Các trường:",
+    "  name  — dạng Latin sẽ hiển thị. BẮT BUỘC.",
+    "  ja    — các cách ASR tiếng Nhật viết ra tên này (kanji/katakana/hiragana).",
+    "  vi    — các cách ASR tiếng Việt nghe ra tên này (viết THƯỜNG, vì ASR",
+    "          tiếng Việt đã bị hạ chữ thường trước khi khớp).",
+    "  bad   — bản dịch SAI đã từng thấy, để lưới an toàn tầng 2 dọn nốt.",
+    "  guard — cụm chứa tên nhưng KHÔNG phải tên, cần chừa ra (vd '一緒').",
+    "",
+    "Cách dựng danh sách nhanh: chạy họp thử một buổi, backend in ra",
+    "'👤 Tên chưa khai trong people.json' kèm số lần xuất hiện — chép vào đây.",
+    "",
+    "LƯU Ý: tên chỉ có MỘT kanji (一, 森, 林...) chỉ được nhận diện khi đi kèm",
+    "kính ngữ (一さん). Đăng ký dạng trần một ký tự sẽ ăn nhầm vào giữa từ khác",
+    "(一緒/一番/一致), nên code cố tình bỏ qua. Muốn chắc, thêm dạng đầy đủ",
+    "họ + tên vào 'ja'."
+  ],
+
+  "people": [
+    {
+      "name": "Ichi",
+      "ja": ["一", "イチ", "市"],
+      "vi": ["ích", "ít chi", "i chi"],
+      "bad": ["13", "Mười ba", "mười ba", "1"],
+      "guard": ["一緒", "一番", "一致", "一つ", "一部", "一応", "一体"]
+    },
+    {
+      "name": "Chiba",
+      "ja": ["千葉"],
+      "vi": ["chi ba", "chiba"],
+      "bad": ["1.000 lá", "1000 lá", "nghìn lá"]
+    }
+  ]
+}

@@ -28,7 +28,23 @@ win:
   # Khi có file build/icon.ico, bỏ comment dòng dưới:
   # icon: build/icon.ico
 mac:
+  category: public.app-category.productivity
+  # Backend là binary PyInstaller onedir nạp dylib từ _internal/.
+  # Bật hardened runtime mà không có Developer ID -> library validation
+  # giết tiến trình con ngay lúc spawn (SIGKILL, không log).
+  # Bản nội bộ: tắt hardened runtime, ký ad-hoc. Khi nào có Developer ID
+  # thì bật lại true — entitlements bên dưới đã khai đủ cờ cần thiết.
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  target:
+    - target: dmg
+      arch:
+        - arm64
+    - target: dir
+      arch:
+        - arm64
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
@@ -36,7 +52,8 @@ mac:
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
 dmg:
-  artifactName: ${name}-${version}.${ext}
+  # ${name} lấy từ package.json = "frontend" -> tên file vô nghĩa.
+  artifactName: ${productName}-${version}-${arch}.${ext}
 linux:
   target:
     - AppImage
@@ -46,6 +63,8 @@ linux:
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}
+# Trả bit +x cho backend và gỡ quarantine trước khi ký (xem build/afterPack.js).
+afterPack: build/afterPack.js
 npmRebuild: false
 publish:
   provider: generic

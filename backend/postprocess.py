@@ -64,6 +64,48 @@ _JA_BIG = {"万": 10 ** 4, "億": 10 ** 8, "兆": 10 ** 12}
 
 _JA_NUM_RE = re.compile(r"[〇零一二三四五六七八九十百千万億兆]+")
 
+# Kính ngữ / chức danh. Đứng ngay sau một cụm kanji thì cụm đó là TÊN NGƯỜI,
+# tuyệt đối không phải số: 百三さん là "Momozo-san", không phải "103-san".
+_JA_HONORIFIC = ("さん", "サン", "ちゃん", "くん", "君", "様", "さま", "氏",
+                 "先生", "社長", "部長", "課長", "係長", "主任", "専務", "常務",
+                 "会長", "支店長", "所長", "リーダー")
+
+# Ký tự ĐẾM hợp lệ đứng sau con số. Danh sách đóng, và đó là chủ ý:
+# gặp kanji lạ ngay sau cụm số thì mặc định coi như TỪ GHÉP, không phải số.
+# 千葉 (Chiba) / 百貨店 / 一致 / 三田 đều rơi vào ca này.
+_JA_COUNTER = set("円人個時分秒日月年週回名件枚台本冊度割歳才階号番点箱杯匹頭"
+                  "倍億万千百兆円歩件社軒室部屋")
+
+
+# Khối kanji thông dụng (CJK Unified Ideographs).
+_KANJI_LO = "\u4e00"
+_KANJI_HI = "\u9fff"
+
+def _ja_number_is_real(text: str, end: int) -> bool:
+    """
+    Cụm kanji số vừa khớp có THẬT SỰ là số không, xét bối cảnh đứng sau nó.
+
+    Không có bộ tách từ tiếng Nhật trong pipeline (thêm MeCab/SudachiPy chỉ
+    để việc này là không đáng), nên dùng luật bối cảnh — bắt đúng toàn bộ ca
+    hỏng thực tế: họ tên chứa kanji số.
+    """
+    rest = text[end:]
+
+    # 千葉さん, 百三さん, 九十九里さん...
+    if rest.startswith(_JA_HONORIFIC):
+        return False
+
+    if not rest:
+        return True
+
+    nxt = rest[0]
+
+    # Kanji đứng liền sau: là đơn vị đếm thì là số, còn lại là từ ghép.
+    if _KANJI_LO <= nxt <= _KANJI_HI:
+        return nxt in _JA_COUNTER
+
+    return True
+
 
 def _ja_kanji_to_int(s: str) -> int | None:
     """千五百 -> 1500. Trả None nếu chuỗi không phải số hợp lệ."""
@@ -164,8 +206,17 @@ def normalize_source(text: str, lang: str) -> str:
 
     if lang == "ja":
         def rep(m):
-            n = _ja_kanji_to_int(m.group(0))
-            return _fmt_ja(n) if n is not None and n >= 100 else m.group(0)
+            raw = m.group(0)
+            if not _ja_number_is_real(text, m.end()):
+                return raw
+            n = _ja_kanji_to_int(raw)
+            if n is None or n < 100:
+                return raw
+            # Năm không bao giờ có dấu phân cách nghìn: 二千二十六年 -> 2026年,
+            # chứ không phải 2,026年.
+            if text[m.end():m.end() + 1] == "年" and 1000 <= n <= 2999:
+                return str(n)
+            return _fmt_ja(n)
         return _JA_NUM_RE.sub(rep, text)
 
     # tiếng Việt: gom các từ số liền nhau
@@ -413,19 +464,30 @@ class Glossary:
             }
 
     @classmethod
-    def load(cls, path: Path) -> "Glossary":
+    def load(cls, path: Path, people_path: Path | None = None) -> "Glossary":
+        """
+        `people_path` là danh sách người dự (people.json). Mỗi người được
+        biến thành mục từ điển nên tên đi qua đúng máy thay thế hai tầng đã
+        có: tầng 1 đổi "千葉さん" -> "Chiba-san" ngay sau ASR (chữ Latin đi
+        qua M2M-100 gần như luôn được giữ nguyên), tầng 2 dọn các bản dịch
+        sai đã biết trong câu đích.
+        """
+        people_entries = people_to_entries(load_people(people_path)) if people_path else []
+
         try:
             data = json.loads(Path(path).read_text(encoding="utf-8"))
             entries = data["entries"] if isinstance(data, dict) else data
-            g = cls(entries)
-            print(f"📖 Từ điển thuật ngữ: {len(g.entries)} mục")
+            # Người dự đứng TRƯỚC thuật ngữ: trùng chuỗi thì tên người thắng.
+            g = cls(people_entries + entries)
+            print(f"📖 Từ điển thuật ngữ: {len(g.entries)} mục "
+                  f"(trong đó {len(people_entries)} mục tên người)")
             return g
         except FileNotFoundError:
             print(f"📖 Không có {path} — chạy không từ điển")
-            return cls([])
+            return cls(people_entries)
         except Exception as err:
             print(f"⚠️  Lỗi đọc từ điển ({err}) — chạy không từ điển")
-            return cls([])
+            return cls(people_entries)
 
     # --------------------------------------------------------------- tầng 1
 
@@ -490,7 +552,272 @@ class Glossary:
 
 
 # ---------------------------------------------------------------------------
-# 4. LOẠI TRÙNG (BUG-016)
+# 4. TÊN NGƯỜI
+# ---------------------------------------------------------------------------
+#
+# Vì sao cần cả một tầng riêng: M2M-100 không có khái niệm "danh từ riêng".
+# Tên người tiếng Nhật viết bằng kanji trùng với kanji số hoặc từ thường, và
+# model dịch NGHĨA của kanji đó:
+#     一さん   -> "13"          (đọc 一 như chữ số)
+#     千葉さん -> "1.000 lá"     (千 = 1000, 葉 = lá)
+#     本田さん -> "ruộng sách"
+# Trong biên bản họp, sai tên người là sai nội dung, không phải sai thẩm mỹ.
+#
+# Hai lớp:
+#   Lớp A — DANH SÁCH NGƯỜI DỰ (people.json). Chắc chắn, vì có sẵn dạng Latin
+#           để thay vào. Chuyển thẳng thành mục từ điển nên dùng lại toàn bộ
+#           máy thay thế hai tầng đã có (fix_source + apply).
+#   Lớp B — PHÁT HIỆN CHUNG cho tên KHÔNG có trong danh sách: đóng băng cụm
+#           "<tên>さん" bằng placeholder trước khi dịch rồi bung lại nguyên
+#           văn sau khi dịch. Giữ được tên gốc tiếng Nhật thay vì biến thành
+#           con số, và ghi log để người dùng bổ sung vào people.json.
+
+_HONORIFICS = ("さん", "サン", "ちゃん", "チャン", "くん", "君", "様", "さま",
+               "氏", "先生", "社長", "部長", "課長", "係長", "主任", "専務",
+               "常務", "会長", "支店長", "所長")
+
+# "Xさん" nhưng X KHÔNG phải tên người. Thiếu danh sách này thì 皆さん
+# ("mọi người") bị đóng băng và câu dịch mất luôn chủ ngữ.
+_NOT_A_NAME = {
+    "皆", "みな", "みんな", "皆様", "お客", "客", "お母", "母", "お父", "父",
+    "お兄", "兄", "お姉", "姉", "おじ", "おば", "おじい", "おばあ", "祖父",
+    "祖母", "息子", "娘", "奥", "旦那", "主人", "店員", "患者", "神", "仏",
+    "お疲れ", "ご苦労", "おまわり", "人", "方", "者", "誰", "どなた",
+}
+
+# Đuôi cho biết đó là CỬA HÀNG/NGHỀ chứ không phải người: パン屋さん, 魚屋さん.
+_NOT_A_NAME_SUFFIX = ("屋", "店", "社", "様方")
+
+# Kanji + katakana (cả nửa thân) + Latin. CỐ TÌNH BỎ hiragana:
+# hiragana ngay trước kính ngữ gần như luôn là HẠT NỐI, không phải tên —
+# "千葉さんと本田さん" mà cho hiragana vào lớp ký tự thì "と" bị nuốt vào tên
+# thành "と本田さん", và câu dịch mất luôn liên từ "và".
+# Đánh đổi: tên viết thuần hiragana (ひろしさん) không tự nhận ra được —
+# những tên đó phải khai trong people.json.
+_NAME_CHARS = r"\u4e00-\u9fff\u30a0-\u30ff\uff66-\uff9dA-Za-z\u30fc"
+
+# {1,6} THAM (không phải lười): quét từ trái sang, khớp tham lấy trọn cụm
+# kanji dài nhất đứng liền trước kính ngữ, đúng bằng họ + tên.
+_JA_NAME_RE = re.compile(
+    r"(?P<name>[" + _NAME_CHARS + r"]{1,6})"
+    r"(?P<hon>" + "|".join(_HONORIFICS) + r")"
+)
+
+# Placeholder đi XUYÊN qua M2M-100. Yêu cầu: ASCII, viết hoa đầu, không mang
+# nghĩa, không bị SentencePiece băm thành mảnh vô nghĩa. Dạng "Pn" + chữ cái
+# được model đối xử như một danh từ riêng lạ -> chép nguyên xi.
+_NAME_SLOT_RE = re.compile(r"\bPn([A-Z])\b")
+
+
+def _looks_like_name(name: str) -> bool:
+    if not name or name in _NOT_A_NAME:
+        return False
+    if name.endswith(_NOT_A_NAME_SUFFIX):
+        return False
+    # Dấu kéo dài katakana đứng một mình không phải tên.
+    if name.strip("ー") == "":
+        return False
+    return True
+
+
+class NameProtector:
+    """
+    Lớp B — giữ tên người KHÔNG có trong people.json sống sót qua bộ dịch.
+
+    Dùng theo cặp: protect() trước khi dịch, restore() sau khi dịch.
+    Không có trạng thái dùng chung giữa các câu nên an toàn khi hai chiều
+    JA->VI và VI->JA chạy song song.
+    """
+
+    MAX_SLOTS = 8
+
+    def __init__(self) -> None:
+        self.unknown: dict[str, int] = {}
+
+    def protect(self, text: str, lang: str) -> tuple[str, dict[str, str]]:
+        """
+        Trả (text đã thay placeholder, bảng bung ngược).
+
+        Chỉ làm cho tiếng Nhật: ASR tiếng Việt đã bị hạ hết về chữ thường
+        (TERM-03) nên không còn tín hiệu viết hoa để nhận ra danh từ riêng,
+        mà "anh/chị/em + <từ>" thì khớp nhầm tràn lan ("anh xem giúp em").
+        Tên tiếng Việt phải khai trong people.json.
+        """
+        if lang != "ja" or not text:
+            return text, {}
+
+        mapping: dict[str, str] = {}
+
+        def _sub(m: re.Match) -> str:
+            name = m.group("name")
+            if not _looks_like_name(name) or len(mapping) >= self.MAX_SLOTS:
+                return m.group(0)
+            slot = "Pn" + chr(ord("A") + len(mapping))
+            mapping[slot] = m.group(0)
+            self.unknown[m.group(0)] = self.unknown.get(m.group(0), 0) + 1
+            return " " + slot + " "
+
+        out = _JA_NAME_RE.sub(_sub, text)
+        return (re.sub(r"\s+", " ", out).strip(), mapping) if mapping else (text, {})
+
+    @staticmethod
+    def restore(text: str, mapping: dict[str, str]) -> tuple[str, int]:
+        """
+        Bung placeholder về tên gốc. Trả (text, số slot BỊ MẤT).
+
+        Số slot mất > 0 nghĩa là M2M-100 đã nuốt placeholder — bên gọi phải
+        biết để log, chứ không được im lặng trả về câu thiếu tên người.
+        """
+        if not mapping:
+            return text, 0
+
+        # Model đôi khi chép placeholder nhưng đổi hoa-thường ("pna", "PNA").
+        # Cứu trước, đếm mất sau — đảo thứ tự là báo mất nhầm những slot thực
+        # ra vẫn còn, và cảnh báo trong log mất hết giá trị.
+        def _salvage(m: re.Match) -> str:
+            return mapping.get("Pn" + m.group(1).upper(), m.group(0))
+
+        text = re.sub(r"\bp[nN]([a-zA-Z])\b", _salvage, text)
+
+        lost = 0
+        for slot, original in mapping.items():
+            pat = r"\b" + slot + r"\b"
+            if re.search(pat, text):
+                text = re.sub(pat, original, text)
+            elif original not in text:
+                # Không còn placeholder mà cũng không thấy tên gốc -> mất thật.
+                lost += 1
+
+        return re.sub(r"\s+", " ", text).strip(), lost
+
+
+def people_to_entries(people: list[dict]) -> list[dict]:
+    """
+    Lớp A — biến danh sách người dự thành mục từ điển.
+
+    Mỗi người sinh ra tối đa hai mục:
+      1. "<tên>さん" -> "<Latin>-san"   (dài hơn, được thay TRƯỚC)
+      2. "<tên>"     -> "<Latin>"       (chỉ khi dạng viết đủ dài để an toàn)
+
+    Mục 2 bị CHẶN với tên một ký tự kanji: máy khớp phía tiếng Nhật không có
+    ranh giới từ (tiếng Nhật không có dấu cách), nên đăng ký "一" sẽ ăn luôn
+    một-chữ-一 trong 一緒/一番/一致 và phá nát câu. Tên một ký tự chỉ được
+    nhận diện khi đi kèm kính ngữ.
+    """
+    entries: list[dict] = []
+
+    for p in people:
+        latin = (p.get("name") or "").strip()
+        if not latin:
+            continue
+
+        ja_forms = [v.strip() for v in p.get("ja", []) if v and v.strip()]
+        vi_forms = [v.strip() for v in p.get("vi", []) if v and v.strip()]
+        bad = [v.strip() for v in p.get("bad", []) if v and v.strip()]
+        guard = [v.strip() for v in p.get("guard", []) if v and v.strip()]
+
+        with_hon_ja = [f + h for f in ja_forms for h in ("さん", "サン")]
+        if with_hon_ja:
+            entries.append({
+                "term": latin + "-san",
+                "ja_hears": with_hon_ja,
+                "vi_hears": [v + " san" for v in vi_forms],
+                "ja_guard": guard,
+                "vi_guard": guard,
+                "vi_bad": bad,
+                "ja_bad": bad,
+            })
+
+        # Chỉ đăng ký dạng trần khi đủ dài để không ăn nhầm giữa từ khác.
+        safe_ja = [f for f in ja_forms if len(f) >= 2]
+        if safe_ja or vi_forms:
+            entries.append({
+                "term": latin,
+                "ja_hears": safe_ja,
+                "vi_hears": vi_forms,
+                "ja_guard": guard,
+                "vi_guard": guard,
+                "vi_bad": bad,
+                "ja_bad": bad,
+            })
+
+    return entries
+
+
+def load_people(path: Path) -> list[dict]:
+    """Đọc people.json. Thiếu file là chuyện bình thường -> chạy không danh sách."""
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return []
+    except Exception as err:
+        print("[people] Loi doc " + str(path) + ": " + str(err))
+        return []
+
+    people = data.get("people", data) if isinstance(data, dict) else data
+    return people if isinstance(people, list) else []
+
+
+# ---------------------------------------------------------------------------
+# 5. TIẾNG ĐỆM
+# ---------------------------------------------------------------------------
+#
+# Tiếng đệm lúc nghĩ ("えーと", "あのー", "ừ thì") không mang nội dung, nhưng
+# M2M-100 vẫn phải dịch chúng thành MỘT CÁI GÌ ĐÓ. Với beam search, vài token
+# vô nghĩa ở đầu câu đủ để lái cả câu sang hướng khác và sinh ra phần thừa —
+# đúng triệu chứng "bản dịch lan man".
+#
+# Chỉ cắt những dạng KHÔNG THỂ nhầm với từ thật:
+#   - えーと / えっと / ええと / うーん / んー : không có nghĩa nào khác.
+#   - あのー / そのー (có dấu kéo dài ー): dạng kéo dài chỉ dùng khi ngập ngừng.
+# CỐ TÌNH GIỮ LẠI:
+#   - あの / その không kéo dài -> là từ chỉ định ("cái đó", "người kia").
+#   - なんか -> là danh từ/phó từ thật ("cái gì đó", "kiểu như").
+#   - まあ  -> nhiều khi mang sắc thái nhượng bộ có nghĩa.
+# Cắt nhầm nhóm này thì mất nội dung thật, tệ hơn hẳn việc để lại tiếng đệm.
+
+_JA_FILLER_RE = re.compile(
+    r"(?:えーと|えっと|ええと|えーっと|うーん|うんーと|んー|えー(?![るりらろ])|"
+    r"あのー+|そのー+|あーー*)"
+    r"[、,\s]*"
+)
+
+# Tiếng Việt: ASR đã hạ hết về chữ thường trước khi tới đây (TERM-03).
+# Neo hai đầu bằng ranh giới khoảng trắng để "à" không ăn mất âm tiết "à"
+# trong "cà phê" hay "và".
+#
+# CỐ TÌNH KHÔNG cắt:
+#   "ạ"      -> tiểu từ KÍNH NGỮ, không phải tiếng đệm. Cắt đi thì chiều
+#               vi->ja mất tín hiệu lịch sự và model chọn thể suồng sã.
+#   "hả/hử"  -> dấu hỏi, mang nghĩa.
+#   "ơ"      -> vừa là thán từ vừa là âm tiết thật, không đáng rủi ro.
+_VI_FILLER_RE = re.compile(
+    r"(?:^|(?<=[\s,]))(?:ừ+m*|ờ+|à|ê)(?=[\s,]|$)[\s,]*",
+    re.IGNORECASE,
+)
+
+
+def strip_fillers(text: str, lang: str) -> str:
+    """
+    Bỏ tiếng đệm khỏi text TRƯỚC KHI DỊCH.
+
+    Chỉ dùng cho bản đưa vào bộ dịch — text nguồn hiển thị cho người dùng
+    vẫn giữ nguyên tiếng đệm, vì đó là thứ người ta thực sự đã nói và biên
+    bản họp phải trung thực.
+
+    Trả chuỗi rỗng nếu cả đoạn chỉ toàn tiếng đệm — bên gọi phải bỏ qua đoạn
+    đó thay vì dịch, nếu không màn hình sẽ hiện một câu bịa từ hư không.
+    """
+    if not text:
+        return text
+
+    out = _JA_FILLER_RE.sub("", text) if lang == "ja" else _VI_FILLER_RE.sub(" ", text)
+    out = re.sub(r"\s+", " ", out).strip(" ,、")
+    return out
+
+
+# ---------------------------------------------------------------------------
+# 6. LOẠI TRÙNG (BUG-016)
 # ---------------------------------------------------------------------------
 
 def _norm_key(s: str) -> str:
@@ -520,7 +847,7 @@ class Deduper:
 
 
 # ---------------------------------------------------------------------------
-# 5. CACHE BẢN DỊCH (BUG-024)
+# 7. CACHE BẢN DỊCH (BUG-024)
 # ---------------------------------------------------------------------------
 
 class TranslationCache:
@@ -558,7 +885,7 @@ class TranslationCache:
 
 
 # ---------------------------------------------------------------------------
-# 6. DỌN DẸP CHUNG
+# 8. DỌN DẸP CHUNG
 # ---------------------------------------------------------------------------
 
 # Một từ lặp >= 3 lần mới cắt — tiếng Việt có láy hợp lệ ("xanh xanh", "đi đi").
@@ -608,7 +935,40 @@ class PostProcessor:
         self.glossary = glossary
         self.cache = cache or TranslationCache()
         self.deduper = Deduper()
-        self.stats = {"dedup": 0, "glossary": 0, "term_fix": 0, "cache_hit": 0}
+        self.names = NameProtector()
+        self.stats = {"dedup": 0, "glossary": 0, "term_fix": 0, "cache_hit": 0,
+                      "name_kept": 0, "name_lost": 0}
+
+    # ------------------------------------------------------------- tên người
+
+    def for_model(self, text: str, lang: str) -> str:
+        """
+        Bản rút gọn của câu nguồn, CHỈ để đưa vào bộ dịch.
+
+        Tách riêng khỏi text hiển thị: biên bản họp phải giữ đúng lời người
+        nói (kể cả tiếng đệm), còn bộ dịch thì nên nhận bản sạch.
+        Chuỗi rỗng nghĩa là cả đoạn chỉ có tiếng đệm -> đừng dịch.
+        """
+        return strip_fillers(text, lang)
+
+    def protect_names(self, text: str, lang: str) -> tuple[str, dict[str, str]]:
+        """
+        Gọi NGAY TRƯỚC translate(), trên text đã qua prepare_source().
+
+        Chỉ bọc những tên KHÔNG có trong people.json — tên đã khai thì
+        fix_source() đã đổi sang dạng Latin từ trước, không còn kính ngữ
+        tiếng Nhật để lớp này khớp nữa.
+        """
+        return self.names.protect(text, lang)
+
+    def restore_names(self, text: str, mapping: dict[str, str]) -> tuple[str, int]:
+        """Gọi NGAY SAU translate(), trước finish(). Trả (text, số tên bị mất)."""
+        if not mapping:
+            return text, 0
+        out, lost = NameProtector.restore(text, mapping)
+        self.stats["name_kept"] += len(mapping) - lost
+        self.stats["name_lost"] += lost
+        return out, lost
 
     def prepare_source(self, text: str, lang: str) -> str:
         """

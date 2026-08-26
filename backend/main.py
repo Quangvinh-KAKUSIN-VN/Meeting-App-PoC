@@ -36,7 +36,27 @@ if getattr(sys, "frozen", False):
 else:
     BASE_DIR = Path(__file__).resolve().parent
 
-MODELS_DIR = BASE_DIR / "models"
+# Thư mục GHI ĐƯỢC. Electron truyền KATOBA_DATA_DIR = app.getPath('userData').
+#
+# BASE_DIR trỏ vào TRONG gói đã cài, và chỗ đó không ghi được:
+#   • macOS   : KaTOBA.app/Contents/Resources/backend/ — ghi vào đây PHÁ chữ
+#               ký bundle, app bị macOS từ chối chạy ở lần mở sau.
+#   • Windows : C:/Program Files/KaTOBA/... — không có quyền ghi khi cài cho
+#               mọi người dùng.
+# Ghi trượt thì _fatal() nuốt luôn exception (except Exception: pass) và
+# backend chết câm lặng — đúng triệu chứng "app lên nhưng backend không chạy".
+_data_dir_env = os.environ.get("KATOBA_DATA_DIR", "").strip()
+DATA_DIR = Path(_data_dir_env) if _data_dir_env else BASE_DIR
+
+try:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    DATA_DIR = BASE_DIR
+
+# Cho phép trỏ model ra ngoài gói (dùng chung giữa nhiều bản build, hoặc để ổ
+# khác vì bộ model nặng vài GB). Mặc định vẫn nằm cạnh binary như cũ.
+_models_dir_env = os.environ.get("KATOBA_MODELS_DIR", "").strip()
+MODELS_DIR = Path(_models_dir_env) if _models_dir_env else BASE_DIR / "models"
 
 MODEL_JA_DIR = MODELS_DIR / "parakeet-ja"
 MODEL_JA_FILE = MODEL_JA_DIR / "model.int8.onnx"
@@ -51,7 +71,16 @@ VI_TOKENS = MODEL_VI_DIR / "tokens.txt"
 M2M100_DIR = MODELS_DIR / "m2m100_418M_int8"
 SILERO_VAD_FILE = MODELS_DIR / "silero_vad.onnx"
 GLOSSARY_FILE = BASE_DIR / "glossary.json"
-LOG_FILE = BASE_DIR / "transcript_log.txt"
+
+# Danh sách người dự họp. Không bắt buộc, nhưng là cách DUY NHẤT chắc chắn để
+# tên người ra đúng: M2M-100 dịch NGHĨA của kanji trong tên (一さん -> "13",
+# 千葉さん -> "1.000 lá"). Khai một lần trong people.json thì tên được đổi
+# sang dạng Latin ngay sau ASR, và chữ Latin thì model chép nguyên xi.
+# Có thể trỏ ra ngoài gói cài đặt qua KATOBA_PEOPLE_FILE để mỗi cuộc họp
+# dùng một danh sách khác nhau mà không phải build lại.
+_people_env = os.environ.get("KATOBA_PEOPLE_FILE", "").strip()
+PEOPLE_FILE = Path(_people_env) if _people_env else BASE_DIR / "people.json"
+LOG_FILE = DATA_DIR / "transcript_log.txt"
 
 MODEL_VERSION = "v6"          # LoRA v6: +67 câu (kính ngữ lồng, giúp+động từ,
                               # rủ rê/lệnh), contrast 14/16, chrF tăng cả 4 hướng
@@ -68,9 +97,38 @@ SAMPLE_RATE = 16000
 TRANSCRIPT_LOG = os.environ.get("KATOBA_TRANSCRIPT_LOG", "0") == "1"
 VERBOSE = os.environ.get("KATOBA_VERBOSE", "0") == "1"
 
+def _vad(name: str, default: float) -> float:
+    """Tham số VAD đọc từ env — chỉnh tại chỗ khi họp mà không phải build lại."""
+    try:
+        return float(os.environ.get(name, default))
+    except ValueError:
+        return default
+
+
+# min_silence = bao lâu im lặng thì VAD coi là HẾT ĐOẠN.
+#
+# Bản cũ để 0.60s / 0.70s và đó là quá ngắn cho họp thật: khoảng dừng để nghĩ
+# giữa câu của người nói tiếng Nhật thường 0.8-1.2s, nên VAD cắt ngay giữa
+# câu. Mỗi mảnh vụn lại được M2M-100 dịch thành một câu hoàn chỉnh bịa ra ->
+# vừa "ngắt quá nhiều" vừa "lan man". Nâng lên 0.90s / 1.00s.
+#
+# Đánh đổi: mỗi câu chậm thêm ~0.3s. Muốn đổi lại thì đặt env
+# KATOBA_VAD_SILENCE_SYSTEM / _MIC, không cần sửa code.
 VAD_PROFILES = {
-    "system":     {"threshold": 0.45, "min_silence": 0.60, "min_speech": 0.25, "max_speech": 12.0},
-    "microphone": {"threshold": 0.65, "min_silence": 0.70, "min_speech": 0.30, "max_speech": 12.0},
+    "system": {
+        "threshold":   _vad("KATOBA_VAD_THRESHOLD_SYSTEM", 0.45),
+        "min_silence": _vad("KATOBA_VAD_SILENCE_SYSTEM", 0.90),
+        "min_speech":  _vad("KATOBA_VAD_MIN_SPEECH_SYSTEM", 0.25),
+        "max_speech":  _vad("KATOBA_VAD_MAX_SPEECH", 12.0),
+    },
+    # Micro thu cả tiếng gõ phím / tiếng ghế nên ngưỡng cao hơn, và người
+    # ngồi trước micro là người ĐANG NGHĨ nên khoảng dừng cũng dài hơn.
+    "microphone": {
+        "threshold":   _vad("KATOBA_VAD_THRESHOLD_MIC", 0.65),
+        "min_silence": _vad("KATOBA_VAD_SILENCE_MIC", 1.00),
+        "min_speech":  _vad("KATOBA_VAD_MIN_SPEECH_MIC", 0.30),
+        "max_speech":  _vad("KATOBA_VAD_MAX_SPEECH", 12.0),
+    },
 }
 
 SEGMENT_QUEUE_MAX = 6
@@ -102,7 +160,7 @@ BEAM_PARTIAL = 1          # bản nháp: đổi chất lượng lấy độ tr�
 
 MIN_RAM_GB = 1.5
 
-STARTUP_ERROR_FILE = BASE_DIR / "startup_error.log"
+STARTUP_ERROR_FILE = DATA_DIR / "startup_error.log"
 
 
 # ---------------------------------------------------------------------------
@@ -265,7 +323,7 @@ try:
 except Exception:
     pass
 
-GLOSSARY = Glossary.load(GLOSSARY_FILE)
+GLOSSARY = Glossary.load(GLOSSARY_FILE, PEOPLE_FILE)
 SHARED_CACHE = TranslationCache(maxsize=1024)
 
 
@@ -298,14 +356,67 @@ def _lang_token(tok, code: str) -> str:
 # Thay bằng: VAD kết thúc đoạn vì im lặng ≥ min_silence -> hết câu.
 # VAD kết thúc vì chạm trần max_speech -> người ta còn đang nói, giữ đệm lại.
 
-# Đuôi cho biết câu CHẮC CHẮN còn tiếp, dù có ngắt hơi.
-JA_CONTINUES = re.compile(r"(ので|のに|けど|けれど|んですが|ですが|ますが|たら|れば|"
-                          r"して|くて|でも|から|とか|など|、)\s*$")
-VI_CONTINUES = re.compile(r"\b(và|nhưng|thì|để|mà|nên|vì|do|nếu|khi|hoặc|với|của|"
-                          r"cho|theo|về)\s*$", re.IGNORECASE)
+# Đuôi cho biết câu CHẮC CHẮN còn tiếp, dù người nói có ngắt hơi.
+#
+# Ba nhóm, xếp theo độ chắc chắn giảm dần:
+#
+# 1. HẠT CÁCH (を に で と へ が も や の は) — tiếng Nhật không bao giờ kết
+#    thúc câu bằng hạt cách trần. "明日の会議は" + ngừng suy nghĩ 1 giây là
+#    câu CHƯA XONG, nhưng bản cũ chốt luôn rồi đẩy "会議は" cho M2M-100 dịch
+#    thành một câu hoàn chỉnh bịa ra. Đây là nguồn chính của lỗi "ngắt quá
+#    nhiều" và kéo theo "bản dịch lan man".
+#    KHÔNG đưa vào: か (dấu hỏi), ね / よ / な / わ / ぞ / ぜ (tiểu từ cuối câu).
+#
+# 2. LIÊN TỪ / THỂ NỐI (ので, けど, たら, して...) — nhóm đã có từ trước.
+#
+# 3. TIẾNG ĐỆM LÚC NGHĨ (えーと, あのー, なんか...) — chính là tình huống
+#    người dùng mô tả: dừng lại nghĩ giữa câu.
+#
+# こんにちは / こんばんは kết thúc bằng は nhưng là câu chào HOÀN CHỈNH ->
+# chặn riêng bằng negative lookbehind, nếu không mỗi lời chào đều bị dính
+# vào câu kế tiếp.
+JA_PARTICLES = "を|に|で|と|へ|が|も|や|の|は"
+# Thể て (て|で) là thể NỐI — "この件について", "検討していて" đều còn tiếp.
+# Đưa て vào đây gom luôn して/くて/ていて, nhưng vẫn giữ các dạng dài phía
+# trước cho dễ đọc khi rà lại danh sách.
+JA_CONJUNCTIVE = ("ので|のに|けど|けれど|けれども|んですが|ですが|ますが|"
+                  "たら|れば|なら|して|くて|ながら|つつ|でも|から|とか|など|"
+                  "そして|それで|それから|ただ|または|および|て|し|ば")
+JA_FILLERS = ("えーと|えっと|ええと|あのー|あの|そのー|その|まあ|まぁ|"
+              "なんか|なんて|ええ|うーん|んー|えー|あー")
+
+JA_CONTINUES = re.compile(
+    r"(?<!こんにち)(?<!こんばん)"
+    r"(?:" + JA_PARTICLES + r"|" + JA_CONJUNCTIVE + r"|" + JA_FILLERS + r"|、)"
+    r"\s*$"
+)
+
+# Tiếng Việt: giới từ, liên từ, lượng từ, và trợ động từ — tất cả đều BẮT BUỘC
+# có bổ ngữ đứng sau, nên nằm cuối đoạn nghĩa là người nói còn đang nghĩ tiếp.
+VI_CONTINUES = re.compile(
+    r"\b(và|nhưng|thì|để|mà|nên|vì|do|nếu|khi|hoặc|với|của|cho|theo|về|"
+    r"là|các|những|một|cái|con|chiếc|trong|trên|dưới|ngoài|sau|trước|giữa|"
+    r"cần|phải|sẽ|đang|đã|bị|được|còn|cũng|rất|hơi|khá|từ|đến|tới|bằng|"
+    r"như|tại|bởi|nhờ|cùng|sang|qua|ừ|à|ờ|ừm|ạ à|thế thì|tức là|nghĩa là)"
+    r"\s*$",
+    re.IGNORECASE,
+)
 
 MAX_BUFFER_CHARS = 150
 MAX_CONTINUATIONS = 2      # tối đa 2 đoạn nối -> chốt, tránh trễ dồn quá 30s
+
+# Số lần được phép gộp vì NGẮT HƠI (khác với gộp vì chạm trần max_speech).
+#
+# Không có trần này thì chuỗi gộp chỉ bị chặn bởi MAX_BUFFER_CHARS = 150 ký
+# tự: người nói cứ kết thúc từng đoạn bằng hạt cách là câu bị giữ lại mãi,
+# độ trễ dồn thành hàng chục giây mà màn hình không hiện gì. 3 lần gộp ứng
+# với ~4 đoạn VAD, đủ cho một câu bị ngắt quãng vài lần lúc suy nghĩ.
+MAX_PAUSE_MERGES = int(os.environ.get("KATOBA_MAX_PAUSE_MERGES", "3"))
+
+# Độ dài tối thiểu của một đoạn để bõ công dịch NHÁP.
+# Chỉ áp cho bản nháp — bản chốt luôn được dịch dù ngắn đến đâu, vì "はい"
+# hay "vâng" là câu trả lời thật và phải hiện ra.
+MIN_PARTIAL_CHARS = int(os.environ.get("KATOBA_MIN_PARTIAL_CHARS", "8"))
 
 
 class SentenceBuffer:
@@ -320,6 +431,7 @@ class SentenceBuffer:
         self.parts: list[str] = []
         self.msg_id = 0
         self.continuations = 0
+        self.pauses = 0
 
     def _continues(self, text: str) -> bool:
         pat = JA_CONTINUES if self.lang == "ja" else VI_CONTINUES
@@ -333,16 +445,22 @@ class SentenceBuffer:
         if not self.parts:
             self.msg_id += 1
             self.continuations = 0
+            self.pauses = 0
 
         self.parts.append(chunk)
         merged = ("" if self.lang == "ja" else " ").join(self.parts)
 
         if truncated:
             self.continuations += 1
+        else:
+            # Đoạn kết thúc vì im lặng. Nếu vẫn phải gộp tiếp (đuôi nối) thì
+            # đây là một lần NGẮT HƠI giữa câu — đếm để còn chặn.
+            self.pauses += 1
 
         final = (
             (not truncated and not self._continues(merged))     # im lặng + không phải đuôi nối
             or self.continuations >= MAX_CONTINUATIONS
+            or self.pauses > MAX_PAUSE_MERGES
             or len(merged) > MAX_BUFFER_CHARS
         )
 
@@ -467,6 +585,24 @@ def write_log(src: str, dst: str, sl: str, tl: str) -> None:
 # LUỒNG CHÍNH
 # ---------------------------------------------------------------------------
 
+def _report_unknown_names(post: PostProcessor) -> None:
+    """
+    In ra những tên người chưa khai trong people.json.
+
+    Đây là con đường thực tế để dựng danh sách: cứ họp một buổi rồi chép các
+    tên xuất hiện nhiều nhất vào file. Không có bản in này thì người dùng phải
+    tự đoán ASR nghe tên ra thành chữ gì.
+    """
+    unknown = post.names.unknown
+    if not unknown:
+        return
+    top = sorted(unknown.items(), key=lambda kv: kv[1], reverse=True)[:15]
+    print(f"👤 Tên chưa khai trong {PEOPLE_FILE.name} "
+          f"({len(unknown)} tên, hiện 15 tên xuất hiện nhiều nhất):")
+    for name, n in top:
+        print(f"   • {name}  ×{n}")
+
+
 async def handle_stream(websocket: WebSocket, recognizer, recognizer_lock: Lock,
                         src_lang: str, tgt_lang: str) -> None:
     await websocket.accept()
@@ -585,15 +721,45 @@ async def handle_stream(websocket: WebSocket, recognizer, recognizer_lock: Lock,
                     }, ensure_ascii=False))
                     continue
 
+                # Bản nháp quá ngắn thì đừng dịch. M2M-100 gặp mẩu 2-3 token
+                # sẽ bịa ra cả câu để lấp chỗ trống, người dùng thấy một câu
+                # hoàn chỉnh SAI nhấp nháy rồi bị thay bằng câu khác — chính
+                # là cảm giác "hội thoại lan man". Hiện "đang nghe…" thay vì
+                # đoán bừa.
+                if not is_final and len(merged) < MIN_PARTIAL_CHARS:
+                    await websocket.send_text(json.dumps({
+                        "id": msg_id,
+                        "src": merged,
+                        "dst": "",
+                        "final": False,
+                        "pending": True,
+                    }, ensure_ascii=False))
+                    continue
+
                 if is_final and post.is_duplicate(merged):
                     if VERBOSE:
                         print(f"🔁 Bỏ trùng: {merged}")
                     continue
 
+                # TIẾNG ĐỆM — bỏ khỏi bản đưa cho model, giữ nguyên bản
+                # hiển thị. Đoạn chỉ toàn tiếng đệm thì không có gì để dịch:
+                # ép M2M-100 dịch "えーと" chỉ tạo ra một câu bịa.
+                text_clean = post.for_model(merged, src_lang)
+                if not text_clean:
+                    if VERBOSE:
+                        print(f"🔇 Chỉ có tiếng đệm, bỏ: {merged!r}")
+                    continue
+
+                # TÊN NGƯỜI — đóng băng "<tên>さん" trước khi vào M2M-100.
+                # Bọc quanh CHỈ text đưa cho model; `merged` giữ nguyên vì nó
+                # còn dùng để hiển thị phía nguồn và để glossary tầng 2 xét
+                # điều kiện "câu nguồn có chứa thuật ngữ".
+                text_mt, name_map = post.protect_names(text_clean, src_lang)
+
                 # ĐỢT-2 — đo thời gian dịch, chỉ để LOG.
                 t_mt = time.perf_counter()
                 text_dst, score = await asyncio.to_thread(
-                    translate, merged, src_lang, tgt_lang, is_final, post.cache)
+                    translate, text_mt, src_lang, tgt_lang, is_final, post.cache)
                 mt_ms = (time.perf_counter() - t_mt) * 1000
 
                 gate = MIN_LOGPROB_FINAL if is_final else MIN_LOGPROB_PARTIAL
@@ -601,6 +767,15 @@ async def handle_stream(websocket: WebSocket, recognizer, recognizer_lock: Lock,
                     if VERBOSE:
                         print(f"🔇 Bỏ (score={score:.2f} < {gate}): {merged} → {text_dst}")
                     continue
+
+                # Bung tên người TRƯỚC finish(): glossary tầng 2 và cleanup
+                # phải làm việc trên câu đã có tên thật, không phải placeholder.
+                text_dst, names_lost = post.restore_names(text_dst, name_map)
+                if names_lost:
+                    print(f"⚠️  M2M-100 nuốt mất {names_lost} tên người trong: "
+                          f"{merged!r} → {text_dst!r}. "
+                          f"Khai những tên này trong {PEOPLE_FILE.name} để "
+                          f"chúng đi qua bằng dạng Latin thay vì placeholder.")
 
                 t_post = time.perf_counter()
                 text_dst = post.finish(merged, text_dst, src_lang, tgt_lang)
@@ -646,7 +821,9 @@ async def handle_stream(websocket: WebSocket, recognizer, recognizer_lock: Lock,
     except WebSocketDisconnect:
         print(f"❌ Ngắt kết nối {src_lang.upper()}→{tgt_lang.upper()} "
               f"| bỏ {dropped} đoạn | dedup {post.stats['dedup']} "
-              f"| glossary {post.stats['glossary']}")
+              f"| glossary {post.stats['glossary']} "
+              f"| tên giữ {post.stats['name_kept']}/mất {post.stats['name_lost']}")
+        _report_unknown_names(post)
     except Exception as err:
         print(f"❌ Lỗi WebSocket: {err}")
     finally:

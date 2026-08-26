@@ -39,7 +39,10 @@ Output/
 frontend/node_modules/
 frontend/out/
 frontend/dist/
-frontend/build/
+# LƯU Ý: KHÔNG ignore frontend/build/ — đó là thư mục buildResources của
+# electron-builder (entitlements.mac.plist, afterPack.js, icon.*), bắt buộc
+# phải có mặt lúc build. Ignore nó là lý do build macOS đứt vì thiếu
+# entitlements. Thư mục build tạm của electron-vite là frontend/out/.
 frontend/.vite/
 .history/
 

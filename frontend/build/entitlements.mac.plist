@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!--
+    Backend là binary PyInstaller onedir: nó nạp hàng chục .dylib từ
+    Resources/backend/_internal/ lúc chạy. Nếu không tắt library validation,
+    hardened runtime sẽ giết tiến trình con NGAY khi spawn (SIGKILL, không
+    một dòng log) vì các dylib đó không cùng Team ID với app.
+    Đây là nguyên nhân số một của "app lên nhưng backend không chạy" trên
+    Apple Silicon.
+  -->
+  <key>com.apple.security.cs.disable-library-validation</key>
+  <true/>
+
+  <!--
+    ctranslate2 và onnxruntime sinh mã máy lúc chạy (JIT kernel cho CPU).
+    Thiếu hai cờ này thì mmap PROT_EXEC bị từ chối -> crash lúc nạp model.
+  -->
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+  <true/>
+
+  <!--
+    Electron truyền PYTHONUTF8 / KATOBA_* qua env cho tiến trình con.
+    Hardened runtime mặc định lọc sạch biến môi trường kiểu DYLD_/PYTHON.
+  -->
+  <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+  <true/>
+
+  <!-- Ghi transcript / log ra thư mục người dùng chọn -->
+  <key>com.apple.security.files.user-selected.read-write</key>
+  <true/>
+
+  <!-- Thu âm micro + audio hệ thống -->
+  <key>com.apple.security.device.audio-input</key>
+  <true/>
+  <key>com.apple.security.device.microphone</key>
+  <true/>
+</dict>
+</plist>
