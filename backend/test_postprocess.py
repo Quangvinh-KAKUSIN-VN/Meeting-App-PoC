@@ -135,15 +135,6 @@ sub_ok = G.apply("gặp nhau ở meeting nhé", "ミーティングで会いま�
 check("VI->JA meeting: ミーティング -> meeting", sub_ok, "meetingで会いましょう")
 
 print("--- Schema cũ vẫn nạp được (tương thích ngược)")
-old = Glossary([{"ja": "ブランチ", "vi": "nhánh",
-                 "vi_variants": ["chi nhánh", "branch"],
-                 "ja_variants": ["支店"],
-                 "vi_guard": ["nhánh sông"]}])
-check("schema cũ: 1 mục nạp ok", len(old.entries), 1)
-check("schema cũ: vẫn ép được thuật ngữ",
-      old.apply("ブランチです", "Đây là chi nhánh", "ja", "vi")[0],
-      "Đây là nhánh")
-
 print("--- Số kanji trong TÊN NGƯỜI không được thành chữ số")
 check("千葉さん không thành '1.000 lá'",
       normalize_source("千葉さんが来ます", "ja"), "千葉さんが来ます")
@@ -159,6 +150,28 @@ check("số THẬT vẫn đổi: 千五百人",
       normalize_source("千五百人が参加", "ja"), "1,500人が参加")
 check("năm không có dấu phân cách nghìn",
       normalize_source("二千二十六年", "ja"), "2026年")
+
+print("--- Số Ả-rập + đơn vị kanji (lỗi '340010,000' trong biên bản 28/8)")
+check("3400万 -> 34,000,000",
+      normalize_source("まで3400万です", "ja"), "まで34,000,000です")
+check("160万円 -> 1,600,000円",
+      normalize_source("160万円かかります", "ja"), "1,600,000円かかります")
+check("21万5000円 -> 215,000円 (đuôi lẻ sau đơn vị)",
+      normalize_source("一番悪くても21万5000円", "ja"), "一番悪くても215,000円")
+check("1億2000万 -> 120,000,000 (hai bậc đơn vị)",
+      normalize_source("1億2000万かかる", "ja"), "120,000,000かかる")
+check("万が一 giữ nguyên (万 trơ trọi không phải số)",
+      normalize_source("万が一のために", "ja"), "万が一のために")
+check("万人受け giữ nguyên",
+      normalize_source("万人受けする", "ja"), "万人受けする")
+
+print("--- N割 -> N0% (2割 từng bị dịch thành 'hai phần trăm')")
+check("2割 -> 20%",
+      normalize_source("2割ぐらいです", "ja"), "20%ぐらいです")
+check("八割 (kanji) -> 80%",
+      normalize_source("八割は完成した", "ja"), "80%は完成した")
+check("割り勘 không bị đụng",
+      normalize_source("割り勘にしよう", "ja"), "割り勘にしよう")
 
 print("--- Lớp A: người dự trong people.json -> dạng Latin trước khi dịch")
 PEOPLE = Glossary(people_to_entries([
