@@ -1,0 +1,693 @@
+{"vi": "Anh vừa push code lên nhánh dev rồi, em review giúp nhé.", "ja": "devブランチにコードをプッシュしたので、レビューをお願いします。"}
+{"vi": "Nhớ pull code mới nhất trước khi bắt đầu làm nha.", "ja": "作業を始める前に、最新のコードをプルしておいてください。"}
+{"vi": "Nhánh của em bị conflict với main rồi, xử lý trước khi merge nhé.", "ja": "あなたのブランチがmainとコンフリクトしているので、マージする前に解決してください。"}
+{"vi": "Tạo một nhánh mới từ main để làm feature này.", "ja": "この機能を実装するために、mainから新しいブランチを作成してください。"}
+{"vi": "Commit này thiếu message rõ ràng, sửa lại.", "ja": "このコミットはメッセージが分かりにくいので、修正してください。"}
+{"vi": "Anh đã merge pull request của em vào nhánh dev rồi.", "ja": "あなたのプルリクエストをdevブランチにマージしました。"}
+{"vi": "Cái commit lỗi đó revert lại.", "ja": "その問題のあるコミットをリバートしてください。"}
+{"vi": "Rebase nhánh của em lên main mới nhất trước nhé.", "ja": "先に最新のmainにブランチをリベースしてください。"}
+{"vi": "Đừng push trực tiếp lên main, tạo pull request đi.", "ja": "mainに直接プッシュせず、プルリクエストを作成してください。"}
+{"vi": "Quên chưa add file mới vào commit rồi.", "ja": "新しいファイルをコミットに追加し忘れています。"}
+{"vi": "Push nhầm lên nhánh main rồi, làm sao giờ?", "ja": "間違ってmainブランチにプッシュしてしまいました。どうすればいいですか。"}
+{"vi": "Bình tĩnh, để anh hướng dẫn em revert lại.", "ja": "落ち着いてください。リバートの方法を案内します。"}
+{"vi": "Cần tạo file .gitignore để bỏ qua node_modules.", "ja": "node_modulesを除外するために、.gitignoreファイルを作成してください。"}
+{"vi": "Đừng commit file cấu hình chứa mật khẩu lên git nhé.", "ja": "パスワードを含む設定ファイルをgitにコミットしないでください。"}
+{"vi": "Anh đã tạo issue trên GitHub, em theo dõi ở đó nhé.", "ja": "GitHubにイシューを作成したので、そちらで確認してください。"}
+{"vi": "Sửa con bug ở phần thanh toán gấp.", "ja": "決済部分のバグを至急修正してください。"}
+{"vi": "Bug này anh reproduce được trên môi trường staging.", "ja": "このバグはステージング環境で再現できました。"}
+{"vi": "Log lại lỗi này để dễ debug hơn.", "ja": "デバッグしやすいように、このエラーのログを出力してください。"}
+{"vi": "Nguyên nhân gốc của lỗi là do thiếu validation ở input.", "ja": "エラーの根本原因は、入力のバリデーション不足です。"}
+{"vi": "Bug này mức độ nghiêm trọng cao, ưu tiên xử lý trước.", "ja": "このバグは重要度が高いので、優先的に対応してください。"}
+{"vi": "Anh không reproduce được lỗi này, em quay màn hình lại được không?", "ja": "このエラーが再現できないので、画面を録画してもらえますか。"}
+{"vi": "Có vẻ lỗi này chỉ xảy ra trên trình duyệt Safari thôi.", "ja": "このエラーはSafariでのみ発生するようです。"}
+{"vi": "Đã fix xong bug đó và test lại rồi.", "ja": "そのバグを修正し、再度テストしました。"}
+{"vi": "Lỗi null pointer ở dòng 42, em check lại nhé.", "ja": "42行目でヌルポインタエラーが発生しているので、確認してください。"}
+{"vi": "Cái này không phải bug đâu, do spec như vậy.", "ja": "これはバグではなく、仕様通りの動作です。"}
+{"vi": "Kết quả không đúng như mong đợi, anh nghi do logic tính toán.", "ja": "結果が期待と異なるので、計算ロジックが原因だと思われます。"}
+{"vi": "Chức năng upload file bị lỗi với file dung lượng lớn.", "ja": "大きいサイズのファイルで、アップロード機能に不具合があります。"}
+{"vi": "Chức năng tìm kiếm không hoạt động với ký tự tiếng Nhật.", "ja": "検索機能が日本語の文字で正しく動作しません。"}
+{"vi": "Chức năng xuất Excel bị lỗi khi dữ liệu trống.", "ja": "データが空の場合に、Excel出力機能でエラーが発生します。"}
+{"vi": "Endpoint này trả về lỗi 500, em kiểm tra server log nhé.", "ja": "このエンドポイントが500エラーを返すので、サーバーログを確認してください。"}
+{"vi": "Em xem lại comment của anh trong pull request nhé.", "ja": "プルリクエストのコメントを確認してください。"}
+{"vi": "Chỗ này nên tách ra thành hàm riêng cho dễ đọc.", "ja": "この部分は可読性のために別の関数に分けたほうがよいです。"}
+{"vi": "Code ổn rồi, anh approve nhé.", "ja": "コードは問題ないので、承認します。"}
+{"vi": "Đặt tên biến rõ nghĩa hơn được không?", "ja": "変数名をもっと分かりやすくしてもらえますか。"}
+{"vi": "Có mấy chỗ anh request changes, em sửa rồi push lại.", "ja": "いくつか修正をお願いしたので、直してから再度プッシュしてください。"}
+{"vi": "Nhớ xóa mấy dòng console.log debug trước khi merge.", "ja": "マージする前にデバッグ用のconsole.logを削除してください。"}
+{"vi": "Logic này bị lặp lại nhiều chỗ, gom lại thành một hàm chung đi.", "ja": "このロジックが何箇所も重複しているので、共通の関数にまとめてください。"}
+{"vi": "Thêm comment giải thích đoạn xử lý phức tạp này.", "ja": "この複雑な処理に説明のコメントを追加してください。"}
+{"vi": "Cần format code theo chuẩn của team.", "ja": "チームのコーディング規約に従ってコードを整形してください。"}
+{"vi": "Đợi anh review xong rồi hãy merge nhé, đừng vội.", "ja": "私のレビューが終わってからマージしてください。急がなくて大丈夫です。"}
+{"vi": "Có warning trong console, em xử lý cho sạch nhé.", "ja": "コンソールに警告が出ているので、解消してください。"}
+{"vi": "Chiều nay mình deploy lên production nhé.", "ja": "今日の午後、本番環境にデプロイします。"}
+{"vi": "Deploy lên staging trước để QA test đã.", "ja": "先にステージング環境にデプロイして、QAにテストしてもらいましょう。"}
+{"vi": "Nếu có sự cố thì rollback về version cũ ngay.", "ja": "問題が発生したら、すぐに以前のバージョンにロールバックしてください。"}
+{"vi": "Bản release lần này có mấy tính năng mới quan trọng.", "ja": "今回のリリースには、いくつかの重要な新機能が含まれています。"}
+{"vi": "Sẽ deploy hotfix cho lỗi thanh toán tối nay.", "ja": "決済エラーのホットフィックスを今夜デプロイします。"}
+{"vi": "Đừng deploy vào thứ sáu, cuối tuần khó xử lý nếu có lỗi.", "ja": "金曜日のデプロイは避けてください。週末に問題が起きると対応が難しいです。"}
+{"vi": "Deploy xong nhớ kiểm tra lại các chức năng chính.", "ja": "デプロイ後、主要な機能を確認してください。"}
+{"vi": "Phiên bản này mình fix được 5 bug và thêm 2 tính năng.", "ja": "このバージョンでは、5件のバグを修正し、2つの機能を追加しました。"}
+{"vi": "Đảm bảo không có lỗi trên console trước khi bàn giao.", "ja": "納品する前に、コンソールにエラーがないことを確認してください。"}
+{"vi": "Task này deadline là thứ tư tuần sau nhé.", "ja": "このタスクの締め切りは来週の水曜日です。"}
+{"vi": "Đang bị block ở phần API, chờ team backend.", "ja": "API部分で作業がブロックされていて、バックエンドチームを待っています。"}
+{"vi": "Tiến độ task của em tới đâu rồi?", "ja": "あなたのタスクの進捗はどうですか。"}
+{"vi": "Assign ticket này xử lý.", "ja": "このチケットをあなたに割り当てます。"}
+{"vi": "Task này ước tính khoảng 3 ngày công.", "ja": "このタスクは約3人日と見積もっています。"}
+{"vi": "Cập nhật trạng thái ticket lên đang làm.", "ja": "チケットのステータスを「作業中」に更新してください。"}
+{"vi": "Cái task này để sang sprint sau làm cũng được.", "ja": "このタスクは次のスプリントに回しても大丈夫です。"}
+{"vi": "Nếu không kịp deadline thì báo anh sớm nhé.", "ja": "締め切りに間に合わない場合は、早めに連絡してください。"}
+{"vi": "Phần này em ước tính mất khoảng 2 ngày.", "ja": "この部分は約2日かかると見積もっています。"}
+{"vi": "Do thay đổi yêu cầu nên tiến độ sẽ trễ khoảng 1 tuần.", "ja": "要件の変更により、進捗が約1週間遅れます。"}
+{"vi": "Ưu tiên làm mấy task quan trọng trước.", "ja": "重要なタスクを優先して進めてください。"}
+{"vi": "Nếu tăng thêm chức năng thì cần thêm nhân lực.", "ja": "機能を追加する場合は、人員の増強が必要です。"}
+{"vi": "Chia task này thành các phần nhỏ cho dễ quản lý.", "ja": "管理しやすいように、このタスクを小さく分割します。"}
+{"vi": "9 giờ sáng mai họp standup nhé mọi người.", "ja": "明日の朝9時にスタンドアップミーティングを行います。"}
+{"vi": "Share màn hình cho mọi người xem với.", "ja": "画面を共有してもらえますか。"}
+{"vi": "Cuộc họp dời sang 2 giờ chiều nhé.", "ja": "会議は午後2時に変更します。"}
+{"vi": "Gửi lại biên bản họp qua chat sau.", "ja": "議事録は後でチャットで送ります。"}
+{"vi": "Hôm nay em làm gì, có gặp khó khăn gì không?", "ja": "今日は何をしますか。何か問題はありますか。"}
+{"vi": "Nghe không rõ, em bật lại mic được không?", "ja": "声が聞こえにくいので、マイクをオンにしてもらえますか。"}
+{"vi": "Mình họp nhanh 15 phút để thống nhất hướng làm nhé.", "ja": "作業方針を合わせるために、15分だけ簡単に打ち合わせしましょう。"}
+{"vi": "Spec phần này thay đổi rồi, em cập nhật lại code nhé.", "ja": "この部分の仕様が変更されたので、コードを更新してください。"}
+{"vi": "Confirm lại với khách hàng yêu cầu này.", "ja": "この要件についてお客様に確認してください。"}
+{"vi": "Chỗ này trong tài liệu chưa rõ, anh hỏi lại khách.", "ja": "この部分は仕様書で不明確なので、お客様に確認します。"}
+{"vi": "Yêu cầu mới là thêm chức năng đăng nhập bằng Google.", "ja": "新しい要件は、Googleログイン機能の追加です。"}
+{"vi": "Đọc kỹ tài liệu yêu cầu trước khi bắt tay vào làm.", "ja": "作業を始める前に、要件定義書をよく読んでください。"}
+{"vi": "Cái này ngoài phạm vi dự án rồi, cần báo giá thêm.", "ja": "これはプロジェクトの範囲外なので、追加見積もりが必要です。"}
+{"vi": "Câu query này chạy chậm quá, cần tối ưu lại.", "ja": "このクエリは処理が遅いので、最適化が必要です。"}
+{"vi": "Nhớ backup database trước khi chạy migration.", "ja": "マイグレーションを実行する前に、データベースをバックアップしてください。"}
+{"vi": "Thêm index cho cột này để query nhanh hơn.", "ja": "クエリを速くするために、このカラムにインデックスを追加してください。"}
+{"vi": "Schema bảng users có thay đổi, em cập nhật migration nhé.", "ja": "usersテーブルのスキーマが変わったので、マイグレーションを更新してください。"}
+{"vi": "Dữ liệu trên production đừng xóa nhầm nhé, cẩn thận.", "ja": "本番環境のデータを誤って削除しないよう、注意してください。"}
+{"vi": "Dữ liệu bị trùng lặp, cần thêm ràng buộc unique.", "ja": "データが重複しているので、ユニーク制約を追加する必要があります。"}
+{"vi": "Chạy lệnh migrate để cập nhật cấu trúc database nhé.", "ja": "データベース構造を更新するために、マイグレーションコマンドを実行してください。"}
+{"vi": "Server bị đầy ổ cứng rồi, cần dọn log cũ.", "ja": "サーバーのディスクがいっぱいなので、古いログを削除する必要があります。"}
+{"vi": "Set biến môi trường cho API key, đừng hard-code.", "ja": "APIキーはハードコードせず、環境変数に設定してください。"}
+{"vi": "Build Docker image lại rồi push lên registry nhé.", "ja": "Dockerイメージを再ビルドして、レジストリにプッシュしてください。"}
+{"vi": "Pipeline CI bị fail ở bước test, em check log đi.", "ja": "CIパイプラインがテスト段階で失敗しているので、ログを確認してください。"}
+{"vi": "Môi trường staging đang down, anh đang khắc phục.", "ja": "ステージング環境がダウンしているので、今対応しています。"}
+{"vi": "Anh đã setup xong môi trường, em clone repo về làm nhé.", "ja": "環境の構築が完了したので、リポジトリをクローンして作業してください。"}
+{"vi": "Anh gửi em thông tin đăng nhập môi trường test qua chat riêng.", "ja": "テスト環境のログイン情報は、個別のチャットで送ります。"}
+{"vi": "Viết unit test cho hàm này trước khi merge.", "ja": "マージする前に、この関数のユニットテストを書いてください。"}
+{"vi": "Test case này chưa cover trường hợp input rỗng.", "ja": "このテストケースは、入力が空の場合をカバーしていません。"}
+{"vi": "QA vừa báo có lỗi ở màn hình đăng ký.", "ja": "QAから登録画面に不具合があると報告がありました。"}
+{"vi": "Độ phủ test còn thấp, cần bổ sung thêm.", "ja": "テストカバレッジが低いので、追加が必要です。"}
+{"vi": "Chạy lại toàn bộ test trước khi release nhé.", "ja": "リリース前に、すべてのテストを再実行してください。"}
+{"vi": "Kiểm tra tương thích trên các trình duyệt chính.", "ja": "主要なブラウザでの互換性を確認してください。"}
+{"vi": "Cái này nên viết thành API riêng cho dễ tái sử dụng.", "ja": "これは再利用しやすいように、独立したAPIとして実装したほうがよいです。"}
+{"vi": "Response API trả về sai format, em check lại nhé.", "ja": "APIのレスポンス形式が間違っているので、確認してください。"}
+{"vi": "Token hết hạn rồi, cần refresh lại.", "ja": "トークンの有効期限が切れているので、更新が必要です。"}
+{"vi": "Thêm xử lý lỗi cho trường hợp mất mạng.", "ja": "ネットワーク切断時のエラー処理を追加してください。"}
+{"vi": "Phần frontend với backend đang lệch nhau về dữ liệu.", "ja": "フロントエンドとバックエンドでデータに不整合があります。"}
+{"vi": "Cache lại kết quả này để giảm tải cho server.", "ja": "サーバーの負荷を減らすために、この結果をキャッシュしてください。"}
+{"vi": "Kiểm tra lại quyền truy cập của user này.", "ja": "このユーザーのアクセス権限を確認してください。"}
+{"vi": "Trang này load chậm, cần tối ưu performance.", "ja": "このページの読み込みが遅いので、パフォーマンスの改善が必要です。"}
+{"vi": "Anh đã cập nhật tài liệu API, em xem qua nhé.", "ja": "APIドキュメントを更新したので、確認してください。"}
+{"vi": "Cần mã hóa mật khẩu trước khi lưu vào database.", "ja": "パスワードは暗号化してからデータベースに保存してください。"}
+{"vi": "Giao diện trên mobile bị vỡ layout, em fix responsive nhé.", "ja": "モバイルでレイアウトが崩れているので、レスポンシブ対応を修正してください。"}
+{"vi": "Log lại thời gian xử lý để đo hiệu năng.", "ja": "パフォーマンスを測定するために、処理時間をログに記録してください。"}
+{"vi": "Cập nhật thư viện lên version mới nhất chưa?", "ja": "ライブラリを最新バージョンに更新しましたか。"}
+{"vi": "Field này bắt buộc nhập, em thêm validation nhé.", "ja": "この項目は必須なので、バリデーションを追加してください。"}
+{"vi": "Button submit bị double click gửi 2 lần, cần chặn lại.", "ja": "送信ボタンのダブルクリックで2回送信されるので、防止する必要があります。"}
+{"vi": "Cần hiển thị thông báo lỗi thân thiện cho người dùng.", "ja": "ユーザーに分かりやすいエラーメッセージを表示してください。"}
+{"vi": "Tách phần config ra file riêng cho dễ quản lý.", "ja": "管理しやすいように、設定を別ファイルに分けてください。"}
+{"vi": "Thêm loading khi gọi API để trải nghiệm tốt hơn.", "ja": "UXを良くするために、API呼び出し時にローディング表示を追加してください。"}
+{"vi": "Thấy chỗ này có thể bị lỗi bảo mật SQL injection.", "ja": "この部分はSQLインジェクションの脆弱性がある可能性があります。"}
+{"vi": "Phân trang cho danh sách này đi, dữ liệu nhiều quá.", "ja": "データが多いので、このリストにページネーションを実装してください。"}
+{"vi": "Ảnh nên nén lại trước khi upload để tiết kiệm dung lượng.", "ja": "容量を節約するために、画像は圧縮してからアップロードしてください。"}
+{"vi": "Kiểm tra lại timezone, giờ hiển thị đang bị lệch.", "ja": "表示時刻がずれているので、タイムゾーンを確認してください。"}
+{"vi": "Viết tài liệu hướng dẫn cài đặt cho dự án này.", "ja": "このプロジェクトのセットアップ手順書を書いてください。"}
+{"vi": "Anh cần em hoàn thành phần này trước buổi demo với khách.", "ja": "お客様へのデモの前に、この部分を完成させてほしいです。"}
+{"vi": "Em đã nhận được yêu cầu của anh chị, sẽ xử lý ngay ạ.", "ja": "ご依頼を承りました。すぐに対応いたします。"}
+{"vi": "Xin lỗi vì sự chậm trễ, chúng tôi sẽ hoàn thành trong hôm nay.", "ja": "遅れて申し訳ございません。本日中に完了いたします。"}
+{"vi": "Chị vui lòng xác nhận lại nội dung này ạ.", "ja": "こちらの内容をご確認いただけますでしょうか。"}
+{"vi": "Chúng tôi cần thêm thông tin để tiến hành công việc.", "ja": "作業を進めるために、追加の情報が必要です。"}
+{"vi": "Xin phép báo lại tiến độ vào cuối tuần này ạ.", "ja": "今週末に進捗をご報告させていただきます。"}
+{"vi": "Cảm ơn anh chị đã phản hồi nhanh ạ.", "ja": "早速のご返信ありがとうございます。"}
+{"vi": "Về vấn đề này, em xin phép trao đổi trong buổi họp ngày mai.", "ja": "この件については、明日の会議で相談させていただきます。"}
+{"vi": "Chúng tôi đã sửa theo yêu cầu, mong anh chị kiểm tra lại.", "ja": "ご要望どおり修正いたしましたので、ご確認をお願いいたします。"}
+{"vi": "Nếu có bất kỳ câu hỏi nào, anh chị cứ liên hệ với em ạ.", "ja": "ご不明な点がございましたら、お気軽にお問い合わせください。"}
+{"vi": "Sẽ chia sẻ lịch trình chi tiết qua email sau ạ.", "ja": "詳細なスケジュールは、後ほどメールで共有いたします。"}
+{"vi": "Làm xong phần này rồi, chuyển sang task tiếp theo.", "ja": "この部分が完了したので、次のタスクに移ります。"}
+{"vi": "Cảm ơn anh đã support, em hiểu rồi.", "ja": "サポートありがとうございます。理解しました。"}
+{"vi": "Cho em xin thêm thời gian, phần này phức tạp hơn dự kiến.", "ja": "この部分は想定より複雑なので、もう少し時間をいただけますか。"}
+{"vi": "Check xem cách làm này ổn không.", "ja": "この方法で問題ないか確認していただけますか。"}
+{"vi": "Em nghỉ phép ngày mai, có gì nhờ anh support nhé.", "ja": "明日は休暇を取るので、何かあればサポートをお願いします。"}
+{"vi": "Phần này em chưa rõ, anh chỉ em với.", "ja": "この部分がよく分からないので、教えていただけますか。"}
+{"vi": "OK anh, em sẽ làm theo cách đó.", "ja": "了解しました。その方法で進めます。"}
+{"vi": "Gửi báo cáo tiến độ vào cuối ngày.", "ja": "本日中に進捗報告を送ります。"}
+{"vi": "Chức năng này chạy ổn rồi, không có vấn đề gì.", "ja": "この機能は問題なく動作しています。"}
+{"vi": "Phần này để anh làm, em tập trung vào màn hình chính trước.", "ja": "この部分は私がやるので、まずメイン画面に集中してください。"}
+{"vi": "Chào buổi sáng cả nhà, hôm nay mình bắt đầu nhé.", "ja": "おはようございます。今日も始めましょう。"}
+{"vi": "Hiểu rồi, cảm ơn.", "ja": "承知しました。ありがとうございます。"}
+{"vi": "Anh đợi em một chút, em kiểm tra lại đã.", "ja": "少々お待ちください。確認します。"}
+{"vi": "Không sao đâu, để anh xử lý cho.", "ja": "大丈夫です。こちらで対応します。"}
+{"vi": "Gửi lại link với.", "ja": "リンクをもう一度送ってもらえますか。"}
+{"vi": "Nhận được file rồi, cảm ơn.", "ja": "ファイルを受け取りました。ありがとうございます。"}
+{"vi": "Chốt vậy nhé, mình làm theo phương án này.", "ja": "では、この案で進めることにしましょう。"}
+{"vi": "Confirm lại là task này đã xong 100 phần trăm chưa?", "ja": "このタスクは100%完了したか、確認させてください。"}
+{"vi": "Anh sẽ trả lời em sau khi hỏi lại phía khách hàng.", "ja": "お客様に確認してから、改めて回答します。"}
+{"vi": "Mình tạm dừng ở đây, mai làm tiếp nhé.", "ja": "今日はここまでにして、明日続きをやりましょう。"}
+{"vi": "Thêm endpoint mới cho phần lấy danh sách user.", "ja": "ユーザー一覧を取得するための新しいエンドポイントを追加してください。"}
+{"vi": "API này trả về status 400 khi thiếu tham số.", "ja": "このAPIはパラメータが不足していると400を返します。"}
+{"vi": "Đổi method từ GET sang POST cho cái request này đi.", "ja": "このリクエストのメソッドをGETからPOSTに変更してください。"}
+{"vi": "Cần validate request body trước khi xử lý.", "ja": "処理する前にリクエストボディをバリデーションしてください。"}
+{"vi": "Response trả về sai format JSON, thiếu field id.", "ja": "レスポンスのJSON形式が正しくなく、idフィールドが不足しています。"}
+{"vi": "Cái API này cần thêm phân trang, dữ liệu nhiều quá.", "ja": "データが多いので、このAPIにページネーションを追加する必要があります。"}
+{"vi": "Đặt version cho API là v2, tránh phá vỡ bản cũ.", "ja": "旧バージョンを壊さないよう、APIのバージョンをv2にしてください。"}
+{"vi": "Header Authorization bị thiếu nên server trả 401.", "ja": "Authorizationヘッダーが無いため、サーバーが401を返しています。"}
+{"vi": "Define lại schema response cho thống nhất giữa các API.", "ja": "API間で統一するため、レスポンスのスキーマを定義し直します。"}
+{"vi": "Query param page và limit em set default là 1 và 20 nhé.", "ja": "クエリパラメータのpageとlimitのデフォルトを1と20にしてください。"}
+{"vi": "Endpoint xóa nên trả về status 204 chứ không phải 200.", "ja": "削除エンドポイントは200ではなく204を返すべきです。"}
+{"vi": "Viết tài liệu API bằng Swagger cho dễ test.", "ja": "テストしやすいように、SwaggerでAPIドキュメントを書いてください。"}
+{"vi": "Cái request timeout mất rồi, chắc do server xử lý lâu.", "ja": "リクエストがタイムアウトしました。サーバーの処理が遅いのが原因かもしれません。"}
+{"vi": "Nhớ trả về message lỗi rõ ràng trong response nhé.", "ja": "レスポンスに分かりやすいエラーメッセージを返してください。"}
+{"vi": "Rate limit API lại để tránh bị spam request.", "ja": "リクエストのスパムを防ぐため、APIにレート制限をかけてください。"}
+{"vi": "CORS chưa cấu hình nên frontend gọi API bị chặn.", "ja": "CORSが設定されていないため、フロントエンドからのAPI呼び出しがブロックされています。"}
+{"vi": "API cập nhật nên dùng PATCH nếu chỉ sửa vài field.", "ja": "一部のフィールドだけ更新する場合は、PATCHを使うとよいです。"}
+{"vi": "Kết quả trả về nên bọc trong object data cho nhất quán.", "ja": "一貫性のため、結果はdataオブジェクトで包んで返してください。"}
+{"vi": "API nên trả mã lỗi riêng để FE map ra thông báo.", "ja": "フロントがメッセージに変換できるよう、APIは独自のエラーコードを返すべきです。"}
+{"vi": "Backend nên giới hạn số bản ghi tối đa mỗi lần trả.", "ja": "バックエンドは、一度に返す最大件数を制限すべきです。"}
+{"vi": "Contract API giữa FE và BE mình chốt trước khi code nhé.", "ja": "コードを書く前に、フロントとバックのAPI仕様を先に決めましょう。"}
+{"vi": "API search nên hỗ trợ tìm gần đúng, không chỉ khớp tuyệt đối.", "ja": "検索APIは完全一致だけでなく、あいまい検索にも対応すべきです。"}
+{"vi": "Cần encode tham số URL để tránh lỗi ký tự đặc biệt.", "ja": "特殊文字のエラーを防ぐため、URLパラメータをエンコードしてください。"}
+{"vi": "API detail nên trả kèm luôn dữ liệu liên quan cho đỡ gọi nhiều.", "ja": "呼び出し回数を減らすため、詳細APIは関連データも一緒に返すとよいです。"}
+{"vi": "Endpoint này cần phân quyền, chỉ owner mới sửa được.", "ja": "このエンドポイントは権限制御が必要で、オーナーのみ編集できます。"}
+{"vi": "Cái endpoint export file nên chạy nền rồi gửi link.", "ja": "ファイルエクスポートのエンドポイントは、バックグラウンドで処理してリンクを送るとよいです。"}
+{"vi": "Backend nên trả pagination kèm tổng số bản ghi.", "ja": "バックエンドは、総件数も一緒にページネーション情報を返すべきです。"}
+{"vi": "Token hết hạn thì gọi API refresh để lấy token mới.", "ja": "トークンが期限切れの場合は、リフレッシュAPIを呼んで新しいトークンを取得してください。"}
+{"vi": "Lưu access token vào đâu, localStorage hay cookie?", "ja": "アクセストークンはどこに保存しますか。localStorageですか、cookieですか。"}
+{"vi": "Phần login social bằng Google em làm tới đâu rồi?", "ja": "Googleのソーシャルログイン機能はどこまで進みましたか。"}
+{"vi": "Middleware kiểm tra quyền phải chạy trước controller.", "ja": "権限をチェックするミドルウェアはコントローラーの前に実行される必要があります。"}
+{"vi": "User này không có quyền admin nên bị chặn ở đây.", "ja": "このユーザーは管理者権限がないため、ここでブロックされます。"}
+{"vi": "Nhớ hash password bằng bcrypt trước khi lưu nhé.", "ja": "保存する前に、bcryptでパスワードをハッシュ化してください。"}
+{"vi": "Session bị mất sau khi reload trang, em check lại.", "ja": "ページをリロードするとセッションが切れるので、確認してください。"}
+{"vi": "JWT payload đừng để thông tin nhạy cảm vào nhé.", "ja": "JWTのペイロードに機密情報を入れないでください。"}
+{"vi": "Frontend cache token vào memory thôi, đừng vào localStorage.", "ja": "フロントエンドはトークンをlocalStorageではなくメモリに保持してください。"}
+{"vi": "Cần xử lý khi backend trả 401 thì đá về trang login.", "ja": "バックエンドが401を返したら、ログイン画面に戻す処理を入れてください。"}
+{"vi": "Component này re-render nhiều lần quá, tối ưu lại đi.", "ja": "このコンポーネントは何度も再レンダリングされるので、最適化してください。"}
+{"vi": "Truyền props xuống component con qua đâu?", "ja": "子コンポーネントにpropsをどこから渡していますか。"}
+{"vi": "State này nên đưa lên component cha để dùng chung.", "ja": "このstateは共有するために親コンポーネントに上げたほうがよいです。"}
+{"vi": "Dùng useEffect nhớ thêm dependency array vào nhé.", "ja": "useEffectを使うときは、依存配列を必ず追加してください。"}
+{"vi": "Button bấm không phản hồi, chắc quên bind sự kiện.", "ja": "ボタンが反応しないので、イベントのバインドを忘れている可能性があります。"}
+{"vi": "Form này thiếu validate ở phía client rồi.", "ja": "このフォームはクライアント側のバリデーションが不足しています。"}
+{"vi": "Trang load chậm, em thử lazy load mấy component nặng.", "ja": "ページの読み込みが遅いので、重いコンポーネントをlazy loadしてみてください。"}
+{"vi": "Cái list này render bị chậm, thêm key cho mỗi item nhé.", "ja": "このリストの描画が遅いので、各項目にkeyを追加してください。"}
+{"vi": "Gọi API trong useEffect nhớ xử lý cleanup khi unmount.", "ja": "useEffect内でAPIを呼ぶときは、アンマウント時のクリーンアップを忘れないでください。"}
+{"vi": "Routing bị lỗi, vào trang con thì bị 404.", "ja": "ルーティングに不具合があり、子ページに入ると404になります。"}
+{"vi": "Bundle nặng quá, em tách code bằng dynamic import đi.", "ja": "バンドルが大きいので、dynamic importでコードを分割してください。"}
+{"vi": "Giao diện chưa responsive trên màn hình nhỏ.", "ja": "小さい画面でレスポンシブ対応ができていません。"}
+{"vi": "State quản lý rối quá, cân nhắc dùng Redux hoặc Zustand.", "ja": "state管理が複雑なので、ReduxかZustandの導入を検討してください。"}
+{"vi": "Cần hiển thị loading spinner khi đang gọi API.", "ja": "API呼び出し中はローディングスピナーを表示してください。"}
+{"vi": "Component cha truyền callback xuống để con gọi ngược lên.", "ja": "子から親を呼べるように、親コンポーネントからコールバックを渡してください。"}
+{"vi": "Debounce ô tìm kiếm lại, gõ mỗi ký tự gọi API là tốn.", "ja": "文字ごとにAPIを呼ぶと無駄なので、検索欄にdebounceをかけてください。"}
+{"vi": "Cái modal này đóng rồi mà state vẫn còn lưu.", "ja": "このモーダルは閉じてもstateが残ったままです。"}
+{"vi": "Cần hủy request cũ khi người dùng gõ tìm kiếm mới.", "ja": "ユーザーが新しく検索したら、古いリクエストをキャンセルしてください。"}
+{"vi": "Cache danh sách tỉnh thành ở frontend cho đỡ gọi API.", "ja": "API呼び出しを減らすため、都道府県一覧はフロントエンドでキャッシュしてください。"}
+{"vi": "Cái state loading, error, data em quản lý gộp một chỗ.", "ja": "loading、error、dataのstateは一箇所でまとめて管理してください。"}
+{"vi": "Form submit hai lần vì chưa disable nút sau khi bấm.", "ja": "ボタンを押した後に無効化していないため、フォームが二重送信されています。"}
+{"vi": "Xử lý trường hợp mảng rỗng để UI không bị vỡ.", "ja": "UIが崩れないよう、配列が空の場合も処理してください。"}
+{"vi": "Thêm loading skeleton cho mượt thay vì màn hình trắng.", "ja": "白い画面ではなく、なめらかにするためにローディングスケルトンを追加してください。"}
+{"vi": "Trang danh sách nên infinite scroll thay vì phân trang nút.", "ja": "一覧ページは、ボタン式ページネーションより無限スクロールにしたほうがよいです。"}
+{"vi": "State server và state client đang không đồng bộ.", "ja": "サーバー側のstateとクライアント側のstateが同期していません。"}
+{"vi": "Phần frontend gọi sai URL API rồi, thiếu tiền tố api.", "ja": "フロントエンドが呼ぶAPIのURLが間違っていて、apiのプレフィックスが不足しています。"}
+{"vi": "Biến môi trường của frontend nhớ thêm tiền tố cho đúng.", "ja": "フロントエンドの環境変数には、正しいプレフィックスを付けてください。"}
+{"vi": "Service này gọi database nhiều lần, gộp query lại đi.", "ja": "このサービスはデータベースを何度も呼んでいるので、クエリをまとめてください。"}
+{"vi": "Controller đừng viết logic nghiệp vụ, tách ra service.", "ja": "コントローラーに業務ロジックを書かず、サービスに分けてください。"}
+{"vi": "Query này bị N+1, em dùng eager loading nhé.", "ja": "このクエリはN+1問題があるので、eager loadingを使ってください。"}
+{"vi": "Migration mới em chạy trên staging trước khi lên prod.", "ja": "新しいマイグレーションは本番の前にステージングで実行してください。"}
+{"vi": "Transaction này phải rollback nếu một bước thất bại.", "ja": "このトランザクションは、いずれかの処理が失敗したらロールバックする必要があります。"}
+{"vi": "Đẩy tác vụ gửi mail vào queue cho khỏi chặn request.", "ja": "リクエストをブロックしないよう、メール送信処理をキューに入れてください。"}
+{"vi": "Cache kết quả này 5 phút để giảm tải database.", "ja": "データベースの負荷を減らすため、この結果を5分間キャッシュしてください。"}
+{"vi": "Cron job chạy lúc 2 giờ sáng để tổng hợp báo cáo.", "ja": "レポート集計のため、cronジョブは午前2時に実行されます。"}
+{"vi": "Model User thiếu quan hệ với bảng Order rồi.", "ja": "UserモデルにOrderテーブルとのリレーションが不足しています。"}
+{"vi": "Dùng ORM thì cẩn thận query sinh ra bị nặng.", "ja": "ORMを使うときは、生成されるクエリが重くならないよう注意してください。"}
+{"vi": "Kết nối database bị timeout, chắc pool hết connection.", "ja": "データベース接続がタイムアウトしました。コネクションプールが枯渇している可能性があります。"}
+{"vi": "Env production đừng bật debug mode nhé, lộ thông tin.", "ja": "本番環境ではデバッグモードをオンにしないでください。情報が漏れます。"}
+{"vi": "Kết nối tới Redis bị lỗi, cache không hoạt động.", "ja": "Redisへの接続に失敗し、キャッシュが機能していません。"}
+{"vi": "Phân tách microservice hay để monolith cho PoC này?", "ja": "このPoCはマイクロサービスに分けますか、それともモノリスにしますか。"}
+{"vi": "Message queue bị đầy, consumer xử lý không kịp.", "ja": "メッセージキューがいっぱいで、コンシューマーの処理が追いついていません。"}
+{"vi": "Backend trả lỗi validation thì frontend hiện dưới từng ô.", "ja": "バックエンドがバリデーションエラーを返したら、フロントエンドは各項目の下に表示してください。"}
+{"vi": "Thêm health check endpoint cho phần monitor.", "ja": "監視用にヘルスチェックのエンドポイントを追加してください。"}
+{"vi": "Đổi biến môi trường xong nhớ restart lại service.", "ja": "環境変数を変更したら、サービスを再起動してください。"}
+{"vi": "Cái field password đừng trả về trong API response nhé.", "ja": "passwordフィールドはAPIレスポンスに含めないでください。"}
+{"vi": "Cần đóng connection database sau khi query xong.", "ja": "クエリが終わったら、データベース接続を閉じてください。"}
+{"vi": "Xử lý lỗi tập trung ở một middleware cho gọn.", "ja": "エラー処理は一箇所のミドルウェアにまとめると簡潔です。"}
+{"vi": "Cái query lọc theo ngày đang không dùng index.", "ja": "日付で絞り込むクエリがインデックスを使っていません。"}
+{"vi": "Kiểm tra kỹ input để tránh SQL injection nhé.", "ja": "SQLインジェクションを防ぐため、入力を十分にチェックしてください。"}
+{"vi": "Deploy backend xong nhớ chạy migration trên prod.", "ja": "バックエンドのデプロイ後、本番でマイグレーションを実行してください。"}
+{"vi": "Cần chống double submit ở cả backend, không chỉ FE.", "ja": "フロントだけでなく、バックエンドでも二重送信を防いでください。"}
+{"vi": "Payload gửi lên thiếu field created_at rồi.", "ja": "送信するペイロードにcreated_atフィールドが不足しています。"}
+{"vi": "Map dữ liệu từ API bên thứ ba về đúng model của mình.", "ja": "サードパーティAPIのデータを自分たちのモデルにマッピングしてください。"}
+{"vi": "Webhook bên thanh toán gọi về nhưng mình chưa xử lý.", "ja": "決済側のWebhookが呼ばれていますが、まだ処理していません。"}
+{"vi": "Dữ liệu giữa hai service bị lệch, cần đồng bộ lại.", "ja": "2つのサービス間でデータがずれているので、同期し直す必要があります。"}
+{"vi": "Format ngày tháng từ backend trả về không đúng chuẩn ISO.", "ja": "バックエンドが返す日付形式がISO標準になっていません。"}
+{"vi": "Serialize object này thành JSON trước khi gửi.", "ja": "送信する前に、このオブジェクトをJSONにシリアライズしてください。"}
+{"vi": "Response bị double encode JSON rồi, sửa lại nhé.", "ja": "レスポンスのJSONが二重エンコードされているので、修正してください。"}
+{"vi": "Data từ form gửi lên nên trim khoảng trắng thừa.", "ja": "フォームから送るデータは、余分な空白をトリムしてください。"}
+{"vi": "Response thời gian thực thì mình dùng WebSocket hay polling?", "ja": "リアルタイムのやり取りは、WebSocketとポーリングのどちらを使いますか。"}
+{"vi": "Request đầu tiên chậm, mấy request sau nhanh nhờ cache.", "ja": "最初のリクエストは遅く、以降はキャッシュのおかげで速くなります。"}
+{"vi": "Server bị memory leak, RAM tăng dần theo thời gian.", "ja": "サーバーにメモリリークがあり、時間とともにRAMが増えています。"}
+{"vi": "Thêm retry 3 lần khi gọi API bên ngoài bị lỗi mạng.", "ja": "外部API呼び出しがネットワークエラーになった場合、3回リトライを追加してください。"}
+{"vi": "Lỗi 500 này do chưa handle trường hợp null.", "ja": "この500エラーは、nullの場合を処理していないためです。"}
+{"vi": "Log request và response lại để dễ debug tích hợp.", "ja": "連携をデバッグしやすいように、リクエストとレスポンスをログに残してください。"}
+{"vi": "Response quá lớn, em nén gzip lại cho nhẹ.", "ja": "レスポンスが大きいので、gzipで圧縮して軽くしてください。"}
+{"vi": "Cần set timeout cho request để khỏi treo mãi.", "ja": "リクエストがずっと固まらないよう、タイムアウトを設定してください。"}
+{"vi": "Upload ảnh nên giới hạn dung lượng tối đa 5MB.", "ja": "画像アップロードは最大5MBに制限してください。"}
+{"vi": "Cái call API này lặp lại nhiều nơi, gom vào một service.", "ja": "このAPI呼び出しが何箇所も重複しているので、一つのサービスにまとめてください。"}
+{"vi": "Viết unit test cho service tính tiền trước.", "ja": "先に、料金計算サービスのユニットテストを書いてください。"}
+{"vi": "Mock API bên ngoài lúc test để khỏi phụ thuộc mạng.", "ja": "テスト時は、ネットワークに依存しないよう外部APIをモックしてください。"}
+{"vi": "Backend chưa xong thì FE dùng mock data tạm nhé.", "ja": "バックエンドが未完成の間は、フロントは仮のモックデータを使ってください。"}
+{"vi": "Em build frontend rồi deploy lên CDN cho nhanh.", "ja": "フロントエンドをビルドして、CDNにデプロイすると速いです。"}
+{"vi": "Validate email và số điện thoại ở cả FE lẫn BE.", "ja": "メールと電話番号は、フロントとバックの両方でバリデーションしてください。"}
+{"vi": "Dữ liệu trả về cần sắp xếp theo thời gian mới nhất.", "ja": "返すデータは新しい順に並べる必要があります。"}
+{"vi": "Tách file .env cho từng môi trường dev và prod.", "ja": "開発と本番、環境ごとに.envファイルを分けてください。"}
+{"vi": "Phần này em ước tính khoảng 5 ngày công, có buffer thêm 1 ngày.", "ja": "この部分は約5人日、バッファを1日追加で見積もっています。"}
+{"vi": "Nếu thêm yêu cầu này thì deadline phải dời lại 3 ngày.", "ja": "この要件を追加する場合、締め切りを3日延ばす必要があります。"}
+{"vi": "Chia nhỏ task ra để estimate cho chính xác hơn.", "ja": "より正確に見積もるため、タスクを細かく分割してください。"}
+{"vi": "Ước tính ban đầu hơi lạc quan, thực tế cần thêm thời gian.", "ja": "当初の見積もりは楽観的すぎて、実際にはもう少し時間が必要です。"}
+{"vi": "Mình lên kế hoạch sprint tuần tới trong buổi họp chiều nay nhé.", "ja": "今日の午後の会議で、来週のスプリント計画を立てましょう。"}
+{"vi": "Cái này ưu tiên cao, đẩy lên làm trước các task khác.", "ja": "これは優先度が高いので、他のタスクより先に着手してください。"}
+{"vi": "Deadline cuối tháng có vẻ hơi gấp, mình bàn lại được không?", "ja": "月末の締め切りは少し厳しいので、相談させてもらえますか。"}
+{"vi": "Cập nhật lại estimate trên Redmine.", "ja": "Redmineの見積もりを更新してください。"}
+{"vi": "Review xong sẽ để lại comment trong MR.", "ja": "レビューが終わったら、マージリクエストにコメントを残します。"}
+{"vi": "Em nhờ anh review gấp giúp, chiều nay cần merge.", "ja": "急ぎでレビューをお願いします。今日の午後にマージする必要があります。"}
+{"vi": "Có mấy điểm cần sửa, em xem comment rồi update lại nhé.", "ja": "修正点がいくつかあるので、コメントを見て直してください。"}
+{"vi": "Code ổn rồi, anh approve, em merge được rồi đó.", "ja": "コードは問題ないので承認します。マージして大丈夫です。"}
+{"vi": "Chỗ này em giải thích thêm giúp anh, chưa rõ ý lắm.", "ja": "この部分は意図が分かりにくいので、もう少し説明してください。"}
+{"vi": "Trước khi họp em gửi agenda để mọi người chuẩn bị nhé.", "ja": "会議の前に、皆が準備できるようアジェンダを送ってください。"}
+{"vi": "Cuối buổi mình chốt lại các đầu việc cần làm nhé.", "ja": "会議の最後に、やるべきタスクを確認しましょう。"}
+{"vi": "Ghi lại biên bản họp rồi share cho cả team sau.", "ja": "議事録を取って、後でチーム全員に共有してください。"}
+{"vi": "Cái này để bàn riêng sau, giờ mình đi tiếp mục tiếp theo.", "ja": "これは後で個別に話しましょう。今は次の項目に進みます。"}
+{"vi": "Mình họp gọn trong 30 phút thôi, tránh lan man nhé.", "ja": "30分以内に簡潔に終わらせて、脱線しないようにしましょう。"}
+{"vi": "Ai có ý kiến gì về hướng làm này không?", "ja": "この進め方について、何か意見はありますか。"}
+{"vi": "Vấn đề này em note lại làm action item cho tuần sau.", "ja": "この件は来週のアクションアイテムとしてメモしておきます。"}
+{"vi": "Tính tới hôm nay task của em xong khoảng 70 phần trăm.", "ja": "今日時点で、私のタスクは約70%完了しています。"}
+{"vi": "Phần backend xong rồi, giờ em qua làm phần tích hợp.", "ja": "バックエンドは完了したので、これから連携部分に取り掛かります。"}
+{"vi": "Báo cáo tiến độ vào cuối mỗi ngày nắm.", "ja": "毎日の終わりに進捗を報告します。"}
+{"vi": "Hôm nay em tập trung xong màn hình đăng nhập trước.", "ja": "今日はまずログイン画面を仕上げることに集中します。"}
+{"vi": "Mọi thứ đang đúng tiến độ, không có gì đáng lo.", "ja": "すべて予定通り進んでいて、特に問題はありません。"}
+{"vi": "Đang bị vướng ở chỗ chờ API từ team đối tác.", "ja": "パートナーチームのAPIを待っていて、作業が止まっています。"}
+{"vi": "Cái này em không tự quyết được, cần hỏi ý sếp.", "ja": "これは自分で判断できないので、上司に確認する必要があります。"}
+{"vi": "Task của em phụ thuộc vào phần anh làm xong trước.", "ja": "私のタスクは、あなたの作業が終わるのが前提になっています。"}
+{"vi": "Có vướng mắc gì cứ báo sớm để mình gỡ cùng nhé.", "ja": "問題があれば早めに連絡してください。一緒に解決しましょう。"}
+{"vi": "Môi trường test bị lỗi nên em chưa kiểm tra được.", "ja": "テスト環境に不具合があり、まだ確認できていません。"}
+{"vi": "Điểm này em confirm lại với khách rồi mới làm nhé.", "ja": "この点はお客様に確認してから進めてください。"}
+{"vi": "Khách yêu cầu đổi màu chủ đạo sang xanh dương.", "ja": "お客様から、メインカラーを青に変更する要望がありました。"}
+{"vi": "Tổng hợp câu hỏi rồi gửi khách một lần cho gọn.", "ja": "質問をまとめて、一度にお客様に送ってください。"}
+{"vi": "Phần này ngoài scope hợp đồng, cần báo giá thêm với khách.", "ja": "これは契約範囲外なので、お客様に追加見積もりを提示する必要があります。"}
+{"vi": "Khách đồng ý phương án B rồi, mình triển khai theo đó.", "ja": "お客様が案Bに合意したので、それで進めます。"}
+{"vi": "Vậy mình chốt dùng React cho frontend nhé cả team.", "ja": "では、フロントエンドはReactを使うことに決めましょう。"}
+{"vi": "Cái này mình thống nhất theo cách đơn giản trước, tối ưu sau.", "ja": "まずシンプルな方法で合意して、最適化は後にしましょう。"}
+{"vi": "Ok vậy quyết định cuối là hoãn tính năng này sang phase 2.", "ja": "では、最終的にこの機能はフェーズ2に延期することにします。"}
+{"vi": "Mọi người đồng ý thì mình tiến hành luôn nhé.", "ja": "皆さんが同意なら、そのまま進めましょう。"}
+{"vi": "Xin lỗi mọi người, phần của em sẽ trễ khoảng một ngày.", "ja": "申し訳ありませんが、私の担当は1日ほど遅れます。"}
+{"vi": "Cuộc họp sáng mai dời sang chiều được không mọi người?", "ja": "明日の朝の会議を、午後に変更してもよろしいでしょうか。"}
+{"vi": "Xin lỗi vì báo trễ, có việc đột xuất.", "ja": "急な用件があり、連絡が遅くなり申し訳ありません。"}
+{"vi": "Do đổi yêu cầu giữa chừng nên tiến độ chung bị ảnh hưởng.", "ja": "途中で要件が変わったため、全体の進捗に影響が出ています。"}
+{"vi": "Task này anh giao cho em phụ trách chính nhé.", "ja": "このタスクは、あなたにメイン担当をお願いします。"}
+{"vi": "Mình phân công lại cho cân, đừng để ai quá tải.", "ja": "誰かに偏りすぎないよう、担当を割り振り直しましょう。"}
+{"vi": "Ưu tiên fix bug production trước, tính năng mới để sau.", "ja": "新機能より先に、本番のバグ修正を優先してください。"}
+{"vi": "Phần này ai rảnh nhận giúp không, em đang ôm hơi nhiều.", "ja": "少し抱えすぎているので、余裕がある人に手伝ってほしいです。"}
+{"vi": "Cảm ơn mọi người, buổi họp hôm nay tới đây thôi nhé.", "ja": "皆さん、ありがとうございました。本日の会議はここまでにします。"}
+{"vi": "Có gì phát sinh thì nhắn trong group, đừng ngại nhé.", "ja": "何かあればグループで連絡してください。遠慮なくどうぞ。"}
+{"vi": "Tuần này mình cố gắng xong phần core trước nhé cả nhà.", "ja": "今週は、まずコア部分を仕上げるよう頑張りましょう。"}
+{"vi": "Cần demo thử cho khách vào cuối sprint.", "ja": "スプリントの最後に、お客様にデモをする予定です。"}
+{"vi": "Buổi họp này mình chỉ tập trung vào phần thiết kế thôi.", "ja": "この会議では、設計部分だけに集中しましょう。"}
+{"vi": "Sẽ tạo ticket cho từng đầu việc rồi giao cụ thể.", "ja": "各タスクごとにチケットを作成して、具体的に割り当てます。"}
+{"vi": "Ước lượng phần này khó, cần người có kinh nghiệm làm.", "ja": "この部分は難しいと見込んでいるので、経験者に任せたいです。"}
+{"vi": "Mình review lại tiến độ tổng thể vào thứ sáu nhé.", "ja": "金曜日に、全体の進捗を見直しましょう。"}
+{"vi": "Nếu kịp thì tuần này bàn giao bản đầu cho khách test.", "ja": "間に合えば、今週初版をお客様のテスト用に納品します。"}
+{"vi": "Thấy phần này rủi ro cao, mình nên làm sớm để phòng hờ.", "ja": "この部分はリスクが高いので、念のため早めに着手すべきです。"}
+{"vi": "Cái đầu việc này chưa rõ yêu cầu, tạm để pending đã.", "ja": "このタスクは要件が不明確なので、一旦保留にします。"}
+{"vi": "Anh cần em ưu tiên xong phần login trước buổi demo.", "ja": "デモの前に、ログイン部分を優先して仕上げてほしいです。"}
+{"vi": "Mình điểm nhanh xem hôm qua ai làm gì, có kẹt chỗ nào không.", "ja": "昨日誰が何をやったか、詰まっている所がないか手短に確認しましょう。"}
+{"vi": "Phần việc còn lại mình chia đôi cho kịp deadline nhé.", "ja": "締め切りに間に合うよう、残りの作業を2人で分けましょう。"}
+{"vi": "Gửi báo cáo tuần cho khách vào chiều thứ sáu.", "ja": "金曜日の午後に、週次報告をお客様に送ります。"}
+{"vi": "Cuộc họp kickoff dự án mình đặt vào sáng thứ hai tuần sau.", "ja": "プロジェクトのキックオフ会議は、来週の月曜午前に設定します。"}
+{"vi": "Chỗ này em nghĩ nên hỏi lại cho chắc trước khi code.", "ja": "念のため、コードを書く前に確認したほうがよいと思います。"}
+{"vi": "Task này để anh handle, em lo phần khác cho kịp.", "ja": "このタスクは私が対応するので、あなたは他の部分を進めてください。"}
+{"vi": "Mình cần thống nhất quy tắc đặt tên trước khi bắt đầu.", "ja": "始める前に、命名規則を統一する必要があります。"}
+{"vi": "Có ai bị block gì không, mình gỡ trong buổi này luôn.", "ja": "ブロックされている人はいますか。この場で解決しましょう。"}
+{"vi": "Phần này em làm xong rồi, chờ QA test là bàn giao được.", "ja": "この部分は完成したので、QAのテスト後に納品できます。"}
+{"vi": "Deadline dự án là cuối quý, mình chia mốc theo từng tháng.", "ja": "プロジェクトの締め切りは四半期末なので、月ごとにマイルストーンを分けます。"}
+{"vi": "Xin phép ra sớm hôm nay, có việc gia đình.", "ja": "本日は家庭の用事があり、早めに失礼させていただきます。"}
+{"vi": "Cái tính năng này để phase sau, giờ tập trung phần chính.", "ja": "この機能は次のフェーズにして、今はメインに集中しましょう。"}
+{"vi": "Mình cần thêm một người nữa cho kịp tiến độ này.", "ja": "この進捗に間に合わせるには、もう一人必要です。"}
+{"vi": "Cần tổng hợp lại các issue còn tồn đọng.", "ja": "残っている課題をまとめてもらえますか。"}
+{"vi": "Sáng mai standup em báo phần đang bị vướng luôn nhé.", "ja": "明日の朝会で、詰まっている部分も報告してください。"}
+{"vi": "Mình gộp hai task này lại vì liên quan tới nhau.", "ja": "この2つのタスクは関連しているので、まとめましょう。"}
+{"vi": "Ước tính lại sau khi rõ yêu cầu từ khách.", "ja": "お客様からの要件が明確になってから、見積もり直してください。"}
+{"vi": "Phần khó nhất mình làm trước để lộ rủi ro sớm.", "ja": "リスクを早く洗い出すため、一番難しい部分から着手しましょう。"}
+{"vi": "Cảm ơn em đã support gấp hôm qua, nhờ vậy kịp deadline.", "ja": "昨日は急なサポートをありがとうございました。おかげで締め切りに間に合いました。"}
+{"vi": "Có thay đổi gì về yêu cầu nhớ cập nhật vào tài liệu nhé.", "ja": "要件に変更があれば、必ずドキュメントを更新してください。"}
+{"vi": "Mình để lại 2 ngày cuối để test và fix bug nhé.", "ja": "最後の2日間は、テストとバグ修正のために確保しましょう。"}
+{"vi": "Nghĩ nên làm bản demo nhỏ trước khi làm full.", "ja": "本格的に作る前に、小さいデモを作ったほうがよいと思います。"}
+{"vi": "Task này quá lớn, mình tách thành nhiều ticket nhỏ đi.", "ja": "このタスクは大きすぎるので、複数の小さいチケットに分けましょう。"}
+{"vi": "Sẽ trao đổi với khách rồi phản hồi lại team sau.", "ja": "お客様と相談してから、チームに回答します。"}
+{"vi": "Buổi họp hôm nay chủ yếu để thống nhất kiến trúc hệ thống.", "ja": "今日の会議は、主にシステム構成を合意するためのものです。"}
+{"vi": "Cần rõ output mong muốn thì mới estimate chính xác được.", "ja": "期待する成果物が明確でないと、正確に見積もれません。"}
+{"vi": "Phần này mình làm song song để tiết kiệm thời gian.", "ja": "時間を節約するため、この部分は並行して進めましょう。"}
+{"vi": "Nếu có rủi ro trễ tiến độ, báo anh càng sớm càng tốt.", "ja": "進捗が遅れるリスクがあれば、できるだけ早く連絡してください。"}
+{"vi": "Mình review lại spec một lần nữa cho chắc trước khi làm.", "ja": "作業前に、念のためもう一度仕様を確認しましょう。"}
+{"vi": "Nhận task này nhưng cần thêm một ngày để tìm hiểu.", "ja": "このタスクを引き受けますが、調査にもう1日必要です。"}
+{"vi": "Cái này ưu tiên thấp, để cuối danh sách cũng được.", "ja": "これは優先度が低いので、リストの最後で構いません。"}
+{"vi": "Mọi người check lại phần mình phụ trách trước khi họp nhé.", "ja": "会議の前に、各自の担当部分を確認しておいてください。"}
+{"vi": "Chia timeline thành ba giai đoạn cho dễ theo dõi.", "ja": "追いやすいように、タイムラインを3段階に分けます。"}
+{"vi": "Thấy yêu cầu này mâu thuẫn với phần trước, cần làm rõ.", "ja": "この要件は前の部分と矛盾しているので、明確にする必要があります。"}
+{"vi": "Mình đồng bộ tiến độ với team Nhật vào mỗi sáng nhé.", "ja": "毎朝、日本のチームと進捗を合わせましょう。"}
+{"vi": "Phần này bàn giao xong thì mình đóng ticket luôn nhé.", "ja": "この部分を納品したら、チケットをクローズしましょう。"}
+{"vi": "Có gì chưa rõ trong tài liệu thì hỏi luôn đừng đoán nhé.", "ja": "資料で不明な点があれば、推測せずにすぐ質問してください。"}
+{"vi": "Mình để một buổi buffer phòng khi phát sinh ngoài dự kiến.", "ja": "想定外のことに備えて、予備の時間を1コマ確保しましょう。"}
+{"vi": "Tổng kết lại những gì đã chốt trong buổi họp.", "ja": "会議で決まったことをまとめてください。"}
+{"vi": "Task này anh thấy nên để người quen phần đó làm sẽ nhanh hơn.", "ja": "このタスクは、その分野に詳しい人がやったほうが速いと思います。"}
+{"vi": "Tuần sau nghỉ lễ nên mình đẩy nhanh phần này trước nhé.", "ja": "来週は祝日で休みなので、この部分を先に急ぎましょう。"}
+{"vi": "Pipeline CI đang fail ở bước build, em xem log chưa?", "ja": "CIパイプラインがビルド段階で失敗していますが、ログは確認しましたか。"}
+{"vi": "Thêm bước chạy test tự động vào pipeline.", "ja": "パイプラインに自動テストのステップを追加してください。"}
+{"vi": "Merge vào main là tự động deploy lên staging luôn.", "ja": "mainにマージすると、自動でステージングにデプロイされます。"}
+{"vi": "Build bị lỗi do thiếu biến môi trường trên CI.", "ja": "CI上で環境変数が不足しているため、ビルドが失敗しています。"}
+{"vi": "Cấu hình cache dependency để build nhanh hơn.", "ja": "ビルドを速くするために、依存関係のキャッシュを設定してください。"}
+{"vi": "Pipeline chạy lâu quá, mình chạy song song các job đi.", "ja": "パイプラインが遅いので、ジョブを並列で実行しましょう。"}
+{"vi": "Nhớ thêm bước lint trước khi cho merge nhé.", "ja": "マージを許可する前に、lintのステップを追加してください。"}
+{"vi": "Deploy tự động chỉ chạy khi tag phiên bản mới.", "ja": "自動デプロイは、新しいバージョンタグを付けたときだけ実行されます。"}
+{"vi": "Rollback pipeline về commit trước cho ổn định.", "ja": "安定させるため、パイプラインを前のコミットに戻してください。"}
+{"vi": "Secret không được hardcode, đưa vào CI secrets nhé.", "ja": "シークレットはハードコードせず、CIのシークレットに登録してください。"}
+{"vi": "Build lại Docker image rồi push lên registry.", "ja": "Dockerイメージを再ビルドして、レジストリにプッシュしてください。"}
+{"vi": "Container bị crash liên tục, em xem docker logs đi.", "ja": "コンテナが繰り返しクラッシュしているので、docker logsを確認してください。"}
+{"vi": "Image nặng quá, dùng multi-stage build cho nhẹ.", "ja": "イメージが大きいので、マルチステージビルドで軽くしてください。"}
+{"vi": "Nhớ đặt giới hạn RAM cho container tránh ăn hết máy.", "ja": "マシンを食い潰さないよう、コンテナにメモリ制限を設定してください。"}
+{"vi": "Viết Dockerfile cho service mới này.", "ja": "この新しいサービス用のDockerfileを書いてください。"}
+{"vi": "Docker compose up bị lỗi port đang bị chiếm.", "ja": "docker compose upでポートが既に使用中のエラーが出ています。"}
+{"vi": "Volume mount sai đường dẫn nên data không lưu.", "ja": "ボリュームのマウントパスが間違っていて、データが保存されません。"}
+{"vi": "Base image cũ có lỗ hổng, em nâng lên bản mới.", "ja": "ベースイメージが古く脆弱性があるので、新しいバージョンに上げてください。"}
+{"vi": "Mình dùng Kubernetes hay chỉ docker compose cho dự án này?", "ja": "このプロジェクトはKubernetesを使いますか、それともdocker composeだけにしますか。"}
+{"vi": "Container khởi động chậm, thêm health check đi.", "ja": "コンテナの起動が遅いので、ヘルスチェックを追加してください。"}
+{"vi": "Server production bị đầy ổ cứng, em dọn log cũ đi.", "ja": "本番サーバーのディスクがいっぱいなので、古いログを削除してください。"}
+{"vi": "CPU server tăng vọt, chắc có process nào bị treo.", "ja": "サーバーのCPU使用率が急上昇しました。どこかのプロセスが固まっている可能性があります。"}
+{"vi": "Cấu hình auto scaling khi lượng truy cập tăng.", "ja": "アクセスが増えたときのためにオートスケーリングを設定してください。"}
+{"vi": "Load balancer chưa phân tải đều giữa các server.", "ja": "ロードバランサーがサーバー間で均等に負荷分散していません。"}
+{"vi": "Nhớ backup server định kỳ hằng ngày nhé.", "ja": "サーバーは毎日定期的にバックアップしてください。"}
+{"vi": "Chứng chỉ SSL sắp hết hạn, em gia hạn trước đi.", "ja": "SSL証明書がもうすぐ期限切れなので、事前に更新してください。"}
+{"vi": "Cấu hình firewall chỉ mở port cần thiết thôi.", "ja": "ファイアウォールは必要なポートだけ開けるよう設定してください。"}
+{"vi": "Domain trỏ sai IP rồi, em sửa lại bản ghi DNS.", "ja": "ドメインが間違ったIPを指しているので、DNSレコードを修正してください。"}
+{"vi": "Server bị tấn công DDoS, mình bật chống DDoS lên.", "ja": "サーバーがDDoS攻撃を受けているので、DDoS対策を有効にしましょう。"}
+{"vi": "Set up môi trường staging giống hệt production.", "ja": "本番と同じ構成のステージング環境をセットアップしてください。"}
+{"vi": "Gắn monitoring để theo dõi CPU và RAM server.", "ja": "サーバーのCPUとメモリを監視するため、モニタリングを設定してください。"}
+{"vi": "Thêm alert gửi Slack khi service bị down nhé.", "ja": "サービスがダウンしたらSlackに通知が飛ぶよう、アラートを追加してください。"}
+{"vi": "Log của service này chưa tập trung, gom về một chỗ đi.", "ja": "このサービスのログが分散しているので、一箇所に集約してください。"}
+{"vi": "Xem dashboard Grafana thấy latency tăng bất thường.", "ja": "Grafanaのダッシュボードでレイテンシーが異常にに上がっているのが見えます。"}
+{"vi": "Bật log level debug tạm để tìm nguyên nhân lỗi.", "ja": "原因を特定するため、一時的にログレベルをdebugにしてください。"}
+{"vi": "Metric request per second đang vượt ngưỡng cảnh báo.", "ja": "秒間リクエスト数が警告のしきい値を超えています。"}
+{"vi": "Set up log rotation để log không phình to.", "ja": "ログが肥大化しないよう、ログローテーションを設定してください。"}
+{"vi": "Trace request này qua các service xem chậm ở đâu.", "ja": "このリクエストを各サービスで追跡して、どこが遅いか確認してください。"}
+{"vi": "Deploy production tối nay sau giờ làm cho an toàn.", "ja": "安全のため、本番デプロイは今夜の業務時間後にします。"}
+{"vi": "Nếu deploy lỗi thì rollback ngay về bản ổn định.", "ja": "デプロイが失敗したら、すぐに安定版にロールバックしてください。"}
+{"vi": "Mình dùng blue-green deployment để không gián đoạn.", "ja": "無停止にするため、ブルーグリーンデプロイを使いましょう。"}
+{"vi": "Chạy migration database trước khi deploy code.", "ja": "コードをデプロイする前に、データベースのマイグレーションを実行してください。"}
+{"vi": "Deploy từng phần nhỏ để dễ phát hiện lỗi.", "ja": "問題を見つけやすいように、少しずつ段階的にデプロイしましょう。"}
+{"vi": "Release note lần này em ghi rõ các thay đổi nhé.", "ja": "今回のリリースノートには、変更点を明確に記載してください。"}
+{"vi": "Bật feature flag để mở tính năng cho một nhóm nhỏ trước.", "ja": "まず一部のユーザーに機能を出すため、フィーチャーフラグを有効にしてください。"}
+{"vi": "Sau deploy nhớ kiểm tra lại health check của service.", "ja": "デプロイ後、サービスのヘルスチェックを確認してください。"}
+{"vi": "Tạo branch riêng cho phần hạ tầng.", "ja": "インフラ用に別のブランチを作成してください。"}
+{"vi": "Cấu hình khác nhau giữa dev, staging, production đó.", "ja": "dev、ステージング、本番で設定が異なります。"}
+{"vi": "Biến môi trường production đừng để lộ ra ngoài nhé.", "ja": "本番の環境変数を外部に漏らさないでください。"}
+{"vi": "Viết script tự động deploy cho đỡ thao tác tay.", "ja": "手作業を減らすため、自動デプロイのスクリプトを書いてください。"}
+{"vi": "Infra mình quản bằng Terraform cho dễ tái tạo.", "ja": "再現しやすいように、インフラはTerraformで管理しましょう。"}
+{"vi": "Restart lại service sau khi đổi file config nhé.", "ja": "設定ファイルを変更したら、サービスを再起動してください。"}
+{"vi": "Kiểm tra quyền truy cập của service account này.", "ja": "このサービスアカウントのアクセス権限を確認してください。"}
+{"vi": "Môi trường local của em chạy khác server, kiểm tra version đi.", "ja": "ローカル環境がサーバーと動作が違うので、バージョンを確認してください。"}
+{"vi": "Làm wireframe cho màn hình này trước khi code.", "ja": "コーディングの前に、この画面のワイヤーフレームを作ってください。"}
+{"vi": "Anh gửi link Figma, em xem mockup mới nhất nhé.", "ja": "Figmaのリンクを送るので、最新のモックアップを確認してください。"}
+{"vi": "Thiết kế này chưa khớp với design system của mình.", "ja": "このデザインは、うちのデザインシステムと合っていません。"}
+{"vi": "Export asset từ Figma ra cho phần frontend.", "ja": "フロントエンド用に、Figmaからアセットを書き出してください。"}
+{"vi": "Bản thiết kế còn thiếu trạng thái lỗi và loading.", "ja": "デザインにエラー状態とローディング状態が不足しています。"}
+{"vi": "Mình review lại prototype với khách vào chiều nay.", "ja": "今日の午後、お客様とプロトタイプを見直しましょう。"}
+{"vi": "Căn lại khoảng cách giữa các phần cho đều.", "ja": "各要素の間隔を揃えて調整してください。"}
+{"vi": "Component này nên tách ra để tái sử dụng trong Figma.", "ja": "このコンポーネントは、Figmaで再利用できるよう分けたほうがよいです。"}
+{"vi": "Khách muốn đổi bố cục trang chủ, em cập nhật mockup.", "ja": "お客様がトップページのレイアウト変更を希望しているので、モックアップを更新してください。"}
+{"vi": "Làm bản thiết kế cho cả mobile lẫn desktop.", "ja": "モバイルとデスクトップ、両方のデザインを作ってください。"}
+{"vi": "Màu chủ đạo đổi sang xanh dương theo brand của khách.", "ja": "お客様のブランドに合わせて、メインカラーを青に変更してください。"}
+{"vi": "Font chữ này khó đọc quá, mình đổi sang cái rõ hơn.", "ja": "このフォントは読みにくいので、もっと見やすいものに変えましょう。"}
+{"vi": "Thống nhất bảng màu trong design system trước.", "ja": "先にデザインシステムでカラーパレットを統一してください。"}
+{"vi": "Cỡ chữ tiêu đề với nội dung chưa có sự phân cấp rõ.", "ja": "見出しと本文の文字サイズに、明確な階層がありません。"}
+{"vi": "Độ tương phản màu chưa đạt chuẩn, người dùng khó nhìn.", "ja": "色のコントラストが基準を満たしておらず、見づらいです。"}
+{"vi": "Dùng đúng token màu chứ đừng hardcode mã hex.", "ja": "16進コードをハードコードせず、カラートークンを使ってください。"}
+{"vi": "Nút chính nên nổi bật hơn nút phụ để dễ nhận ra.", "ja": "主要なボタンは、補助ボタンより目立たせて分かりやすくしてください。"}
+{"vi": "Spacing giữa các dòng chữ hơi chật, giãn ra chút đi.", "ja": "行間が少し詰まっているので、もう少し広げてください。"}
+{"vi": "Giao diện vỡ layout trên màn hình điện thoại rồi.", "ja": "スマホの画面でレイアウトが崩れています。"}
+{"vi": "Làm responsive cho bảng dữ liệu này, hiện tràn màn.", "ja": "この表がはみ出しているので、レスポンシブ対応してください。"}
+{"vi": "Menu trên mobile nên thu thành icon hamburger.", "ja": "モバイルではメニューをハンバーガーアイコンにまとめてください。"}
+{"vi": "Nội dung nên căn giữa với chiều rộng tối đa hợp lý.", "ja": "コンテンツは適切な最大幅で中央揃えにしてください。"}
+{"vi": "Ảnh không co giãn theo khung, em set object-fit đi.", "ja": "画像が枠に合わないので、object-fitを設定してください。"}
+{"vi": "Bố cục lưới này em dùng grid hay flexbox?", "ja": "このグリッドレイアウトはgridを使いますか、それともflexboxですか。"}
+{"vi": "Trên tablet layout bị thừa khoảng trống hai bên.", "ja": "タブレットでは、左右に余白が空きすぎています。"}
+{"vi": "Luồng đăng ký nhiều bước quá, em rút gọn lại nhé.", "ja": "登録の流れがステップ多すぎるので、短くしてください。"}
+{"vi": "Người dùng không biết bấm gì tiếp, thiếu hướng dẫn.", "ja": "次に何を押せばいいか分からないので、案内が不足しています。"}
+{"vi": "Thêm thông báo xác nhận trước khi xóa cho an toàn.", "ja": "安全のため、削除する前に確認メッセージを表示してください。"}
+{"vi": "Nút bấm nhỏ quá, trên mobile khó chạm trúng.", "ja": "ボタンが小さすぎて、モバイルでは押しにくいです。"}
+{"vi": "Thêm hiệu ứng loading để người dùng biết đang xử lý.", "ja": "処理中だと分かるように、ローディングの演出を追加してください。"}
+{"vi": "Form báo lỗi nên hiện ngay dưới ô nhập cho dễ thấy.", "ja": "フォームのエラーは、入力欄のすぐ下に表示すると分かりやすいです。"}
+{"vi": "Trải nghiệm lần đầu vào app nên có onboarding ngắn.", "ja": "初回利用時には、短いオンボーディングがあるとよいです。"}
+{"vi": "Đặt các thao tác chính ở nơi dễ với tay trên mobile.", "ja": "モバイルでは、主要な操作を指が届きやすい位置に置いてください。"}
+{"vi": "Trạng thái rỗng của danh sách nên có gợi ý hành động.", "ja": "リストが空のときは、次の行動を促すヒントを表示してください。"}
+{"vi": "Thêm phản hồi khi bấm nút để người dùng biết đã nhận.", "ja": "押したことが分かるように、ボタンにフィードバックを追加してください。"}
+{"vi": "Chỗ này code chưa đúng thiết kế, lệch mấy pixel.", "ja": "この部分は実装がデザインと合っておらず、数ピクセルずれています。"}
+{"vi": "Hỏi designer nếu spec giao diện chưa rõ.", "ja": "画面の仕様が不明確なら、デザイナーに確認してください。"}
+{"vi": "Animation trong thiết kế em làm được tới đâu rồi?", "ja": "デザインのアニメーションはどこまで実装できましたか。"}
+{"vi": "Designer cập nhật mockup mới, em code lại phần header.", "ja": "デザイナーがモックアップを更新したので、ヘッダーを実装し直してください。"}
+{"vi": "Mình chốt thiết kế trước rồi hẵng chia task code nhé.", "ja": "先にデザインを確定してから、実装タスクを分けましょう。"}
+{"vi": "Icon này em lấy đúng bộ trong design system nhé.", "ja": "このアイコンは、デザインシステムの正しいセットから使ってください。"}
+{"vi": "Viết test case cho luồng thanh toán chưa?", "ja": "決済フローのテストケースは書きましたか。"}
+{"vi": "Bug này QA reproduce được trên bản build mới nhất.", "ja": "このバグはQAが最新ビルドで再現できました。"}
+{"vi": "Chạy regression test trước khi release nhé.", "ja": "リリース前にリグレッションテストを実行してください。"}
+{"vi": "Test case này thiếu trường hợp giá trị âm.", "ja": "このテストケースは、負の値のケースが抜けています。"}
+{"vi": "Ghi rõ các bước tái hiện bug trong ticket.", "ja": "チケットにバグの再現手順を明確に記載してください。"}
+{"vi": "Bug mức nghiêm trọng cao, block cả release luôn.", "ja": "このバグは重大度が高く、リリースをブロックします。"}
+{"vi": "Kết quả test không khớp với kỳ vọng trong spec.", "ja": "テスト結果が仕様の期待値と一致しません。"}
+{"vi": "Bổ sung test cho trường hợp biên.", "ja": "境界値のケースのテストを追加してください。"}
+{"vi": "QA đã pass hết test case, sẵn sàng release.", "ja": "QAが全テストケースをパスし、リリースの準備ができました。"}
+{"vi": "Cái bug cũ tái xuất hiện sau khi merge, kiểm tra lại.", "ja": "マージ後に古いバグが再発したので、確認してください。"}
+{"vi": "Viết test tự động cho phần này để đỡ test tay.", "ja": "手動テストを減らすため、この部分の自動テストを書いてください。"}
+{"vi": "Data test nên tách riêng, đừng dùng data thật.", "ja": "本物のデータではなく、テスト用のデータを使ってください。"}
+{"vi": "Test trên nhiều trình duyệt xem có lỗi tương thích không.", "ja": "互換性の問題がないか、複数のブラウザでテストしてください。"}
+{"vi": "Kiểm tra lại luồng đăng nhập sau khi sửa.", "ja": "修正後、ログインの流れを再確認してください。"}
+{"vi": "Bug này chỉ xảy ra khi mạng chậm, khó test.", "ja": "このバグはネットワークが遅いときだけ発生するので、テストが難しいです。"}
+{"vi": "Mình cần môi trường test riêng cho từng nhánh.", "ja": "ブランチごとに専用のテスト環境が必要です。"}
+{"vi": "Ưu tiên test mấy chức năng chính trước.", "ja": "まず主要な機能から優先してテストしてください。"}
+{"vi": "Test hiệu năng khi có nhiều người dùng cùng lúc.", "ja": "多数のユーザーが同時アクセスした場合の性能をテストしてください。"}
+{"vi": "Checklist kiểm thử em cập nhật lên tài liệu chung nhé.", "ja": "テストのチェックリストを共有ドキュメントに更新してください。"}
+{"vi": "Bug đã fix nhưng chưa test kỹ, đừng đóng ticket vội.", "ja": "バグは修正しましたが十分テストしていないので、まだチケットを閉じないでください。"}
+{"vi": "Cần mã hóa dữ liệu nhạy cảm trước khi lưu.", "ja": "機密データは保存する前に暗号化してください。"}
+{"vi": "Lỗ hổng XSS ở ô nhập bình luận, em xử lý gấp.", "ja": "コメント入力欄にXSSの脆弱性があるので、至急対応してください。"}
+{"vi": "Đừng lưu mật khẩu dạng thô, phải hash lại.", "ja": "パスワードは平文で保存せず、ハッシュ化してください。"}
+{"vi": "Phân quyền chưa chặt, user thường vào được trang admin.", "ja": "権限制御が甘く、一般ユーザーが管理画面に入れてしまいます。"}
+{"vi": "Kiểm tra kỹ input để chống SQL injection.", "ja": "SQLインジェクションを防ぐため、入力を十分に検証してください。"}
+{"vi": "Token nên có thời hạn ngắn để giảm rủi ro.", "ja": "リスクを減らすため、トークンの有効期限は短くすべきです。"}
+{"vi": "API này chưa xác thực, ai cũng gọi được là nguy hiểm.", "ja": "このAPIは認証がなく、誰でも呼べるので危険です。"}
+{"vi": "Log đừng ghi thông tin nhạy cảm như mật khẩu nhé.", "ja": "ログにパスワードなどの機密情報を記録しないでください。"}
+{"vi": "Mình nên rà soát bảo mật trước khi lên production.", "ja": "本番公開の前に、セキュリティの点検をすべきです。"}
+{"vi": "Kết nối phải dùng HTTPS, không để HTTP nữa.", "ja": "接続はHTTPSを使い、HTTPは使わないでください。"}
+{"vi": "Thêm giới hạn số lần đăng nhập sai để chống dò mật khẩu.", "ja": "パスワード総当たりを防ぐため、ログイン失敗回数に制限を追加してください。"}
+{"vi": "File upload phải kiểm tra định dạng tránh mã độc.", "ja": "アップロードファイルは、悪意のあるコードを防ぐため形式を検証してください。"}
+{"vi": "Khóa bí mật đừng commit lên git, dùng biến môi trường.", "ja": "秘密鍵はgitにコミットせず、環境変数を使ってください。"}
+{"vi": "Quyền truy cập nên theo nguyên tắc tối thiểu cần thiết.", "ja": "アクセス権限は、必要最小限の原則に従うべきです。"}
+{"vi": "Có dấu hiệu rò rỉ dữ liệu, mình điều tra ngay.", "ja": "データ漏洩の兆候があるので、すぐに調査しましょう。"}
+{"vi": "Cập nhật thư viện có lỗ hổng bảo mật lên bản vá.", "ja": "脆弱性のあるライブラリを、修正版に更新してください。"}
+{"vi": "Session hết hạn thì phải bắt đăng nhập lại.", "ja": "セッションが切れたら、再ログインを求める必要があります。"}
+{"vi": "Dữ liệu cá nhân của khách phải xử lý đúng quy định.", "ja": "顧客の個人情報は、規定に従って適切に扱う必要があります。"}
+{"vi": "App bị crash trên iOS nhưng Android thì không.", "ja": "iOSではアプリがクラッシュしますが、Androidでは問題ありません。"}
+{"vi": "Build bản mới rồi gửi lên TestFlight cho test.", "ja": "新しいビルドを作って、TestFlightにアップロードしてください。"}
+{"vi": "Xin quyền camera nhớ giải thích lý do cho người dùng.", "ja": "カメラの権限を求める際は、理由を利用者に説明してください。"}
+{"vi": "Push notification chưa đến trên máy Android đời cũ.", "ja": "古いAndroid端末で、プッシュ通知が届いていません。"}
+{"vi": "Giao diện bị lệch trên màn hình có tai thỏ.", "ja": "ノッチのある画面で、レイアウトがずれています。"}
+{"vi": "Tối ưu dung lượng app, bản cài đang nặng quá.", "ja": "インストールサイズが大きいので、アプリの容量を最適化してください。"}
+{"vi": "App chạy nền vẫn ngốn pin, kiểm tra lại tiến trình.", "ja": "バックグラウンドでバッテリー消費が多いので、処理を見直してください。"}
+{"vi": "Bản mới đẩy lên store bị Apple từ chối rồi.", "ja": "新バージョンがApp Storeでリジェクトされました。"}
+{"vi": "Xử lý trường hợp mất mạng khi đang dùng app.", "ja": "アプリ使用中にネットワークが切れた場合の処理を入れてください。"}
+{"vi": "Chữ tiếng Nhật bị tràn ra ngoài nút trên mobile.", "ja": "モバイルで、日本語がボタンからはみ出しています。"}
+{"vi": "Cần test trên nhiều kích thước màn hình khác nhau.", "ja": "さまざまな画面サイズでテストする必要があります。"}
+{"vi": "Cache dữ liệu để app dùng được cả khi offline.", "ja": "オフラインでも使えるように、データをキャッシュしてください。"}
+{"vi": "Deep link mở sai màn hình, em kiểm tra cấu hình.", "ja": "ディープリンクが違う画面を開くので、設定を確認してください。"}
+{"vi": "App load lần đầu chậm, thêm màn hình splash đi.", "ja": "初回起動が遅いので、スプラッシュ画面を追加してください。"}
+{"vi": "Cập nhật SDK lên bản mới cho tương thích OS mới nhất.", "ja": "最新OSに対応するため、SDKを新しいバージョンに更新してください。"}
+{"vi": "Trang chủ load 5 giây, chậm quá phải tối ưu.", "ja": "トップページの読み込みが5秒もかかるので、最適化が必要です。"}
+{"vi": "Query này quét cả bảng, thêm index vào đi.", "ja": "このクエリは全テーブルを走査しているので、インデックスを追加してください。"}
+{"vi": "Dùng profiler xem hàm nào chạy chậm nhất.", "ja": "プロファイラーで、どの関数が一番遅いか確認してください。"}
+{"vi": "Ảnh chưa nén nên trang nặng, em tối ưu lại nhé.", "ja": "画像が圧縮されておらずページが重いので、最適化してください。"}
+{"vi": "Cache lại kết quả này để khỏi tính lại mỗi lần.", "ja": "毎回計算し直さないよう、この結果をキャッシュしてください。"}
+{"vi": "Vòng lặp lồng nhau làm chậm, em viết lại thuật toán.", "ja": "ネストされたループが遅いので、アルゴリズムを書き直してください。"}
+{"vi": "Bundle JavaScript nặng quá, tách nhỏ ra đi.", "ja": "JavaScriptのバンドルが大きいので、分割してください。"}
+{"vi": "Gọi API quá nhiều lần, gộp lại thành một request.", "ja": "API呼び出しが多すぎるので、一つのリクエストにまとめてください。"}
+{"vi": "Thêm phân trang thay vì load hết dữ liệu một lúc.", "ja": "全データを一度に読み込まず、ページネーションを追加してください。"}
+{"vi": "Bộ nhớ tăng dần không giảm, chắc bị rò rỉ.", "ja": "メモリが増え続けて減らないので、リークしている可能性があります。"}
+{"vi": "Tải trang nặng do gọi font từ nhiều nguồn.", "ja": "複数のソースからフォントを読み込んでいて、ページが重いです。"}
+{"vi": "Dùng lazy load cho ảnh dưới màn hình đầu tiên.", "ja": "ファーストビューより下の画像には、遅延読み込みを使ってください。"}
+{"vi": "Kết quả tìm kiếm chậm, cần đánh index cho cột này.", "ja": "検索が遅いので、このカラムにインデックスを張る必要があります。"}
+{"vi": "Nén phản hồi bằng gzip để giảm thời gian tải.", "ja": "読み込み時間を減らすため、レスポンスをgzipで圧縮してください。"}
+{"vi": "Đo lại thời gian phản hồi sau khi tối ưu nhé.", "ja": "最適化後、応答時間を再度計測してください。"}
+{"vi": "Chúng tôi đã nhận yêu cầu và sẽ phản hồi trong hôm nay.", "ja": "ご依頼を承りました。本日中にご返信いたします。"}
+{"vi": "Xin lỗi vì sự bất tiện, chúng tôi đang khắc phục.", "ja": "ご不便をおかけし申し訳ございません。現在対応しております。"}
+{"vi": "Chị vui lòng kiểm tra và phản hồi.", "ja": "ご確認のうえ、ご返信いただけますと幸いです。"}
+{"vi": "Chúng tôi sẽ gửi báo cáo tiến độ vào cuối tuần này.", "ja": "今週末に進捗のご報告をお送りいたします。"}
+{"vi": "Về vấn đề này em xin phép xác nhận lại rồi trả lời sau.", "ja": "この件については、確認のうえ改めてご回答いたします。"}
+{"vi": "Cảm ơn anh chị đã luôn hỗ trợ dự án.", "ja": "いつもプロジェクトにご協力いただき、ありがとうございます。"}
+{"vi": "Chúng tôi đã hoàn thành theo yêu cầu, mong anh chị nghiệm thu.", "ja": "ご要望どおり完了いたしましたので、ご確認をお願いいたします。"}
+{"vi": "Nếu có điều chỉnh gì, anh chị cứ cho em biết ạ.", "ja": "修正のご希望がございましたら、お知らせください。"}
+{"vi": "Xin phép dời lịch họp sang tuần sau được không ạ?", "ja": "会議の日程を来週に変更してもよろしいでしょうか。"}
+{"vi": "Chúng tôi rất mong được tiếp tục hợp tác lâu dài.", "ja": "今後とも長くご協力させていただければ幸いです。"}
+{"vi": "Bản demo đã sẵn sàng, em xin phép trình bày vào thứ năm.", "ja": "デモの準備が整いましたので、木曜日にご説明させていただきます。"}
+{"vi": "Xin lỗi vì phản hồi chậm do khối lượng công việc.", "ja": "業務が立て込んでおり、ご返信が遅くなり申し訳ございません。"}
+{"vi": "Chúng tôi cần thêm thông tin để tiến hành, mong anh chị hỗ trợ.", "ja": "作業を進めるために追加情報が必要ですので、ご協力をお願いいたします。"}
+{"vi": "Về báo giá, em sẽ gửi chi tiết qua email sau ạ.", "ja": "お見積もりにつきましては、後ほど詳細をメールでお送りいたします。"}
+{"vi": "Rất mong nhận được phản hồi của anh chị trước thứ sáu.", "ja": "金曜日までにお返事をいただけますと幸いです。"}
+{"vi": "Hôm qua em xong phần API đăng nhập.", "ja": "昨日はログインAPIを完了しました。"}
+{"vi": "Hôm nay em làm tiếp phần xử lý thanh toán.", "ja": "今日は決済処理の続きを行います。"}
+{"vi": "Đang bị vướng chỗ tích hợp bên thứ ba.", "ja": "サードパーティ連携の部分で詰まっています。"}
+{"vi": "Không có gì block, mọi thứ đúng tiến độ.", "ja": "特にブロックはなく、予定通り進んでいます。"}
+{"vi": "Em cần anh review PR để merge trong sáng nay.", "ja": "午前中にマージするため、PRのレビューをお願いします。"}
+{"vi": "Phần của em trễ nửa ngày so với kế hoạch.", "ja": "私の担当は、予定より半日遅れています。"}
+{"vi": "Hôm nay em tập trung fix mấy bug QA báo.", "ja": "今日はQAから報告されたバグの修正に集中します。"}
+{"vi": "Nhờ ai đó hỗ trợ phần testing chiều nay.", "ja": "今日の午後、テストを手伝ってくれる人がいると助かります。"}
+{"vi": "Task tuần này em xong khoảng 80% rồi.", "ja": "今週のタスクは、約80%完了しています。"}
+{"vi": "Chờ thiết kế từ designer mới làm tiếp được.", "ja": "デザイナーからのデザイン待ちで、その後に続けられます。"}
+{"vi": "Hôm qua họp với khách xong, có vài thay đổi nhỏ.", "ja": "昨日お客様と打ち合わせをし、いくつか小さな変更がありました。"}
+{"vi": "Sẽ deploy bản fix lên staging trong hôm nay.", "ja": "本日中に、修正版をステージングにデプロイします。"}
+{"vi": "Phần này khó hơn dự kiến, em cần thêm một ngày.", "ja": "想定より難しいので、もう1日必要です。"}
+{"vi": "Mọi người nhớ cập nhật trạng thái task trên bảng nhé.", "ja": "各自、ボードのタスク状態を更新してください。"}
+{"vi": "Production đang down, mình xử lý gấp ngay.", "ja": "本番が停止しているので、至急対応しましょう。"}
+{"vi": "Nhiều user báo không đăng nhập được từ sáng nay.", "ja": "今朝から、多くのユーザーがログインできないと報告しています。"}
+{"vi": "Xem log lỗi để tìm nguyên nhân trước.", "ja": "まず、エラーログを見て原因を特定してください。"}
+{"vi": "Rollback về bản trước để dịch vụ hoạt động lại đã.", "ja": "サービスを復旧させるため、まず前のバージョンに戻しましょう。"}
+{"vi": "Database quá tải, mình cần khởi động lại có kiểm soát.", "ja": "データベースが過負荷なので、計画的に再起動する必要があります。"}
+{"vi": "Thông báo cho khách về sự cố và thời gian khắc phục.", "ja": "お客様に障害と復旧見込みをご連絡してください。"}
+{"vi": "Sau khi khắc phục xong, mình viết báo cáo sự cố.", "ja": "復旧後、障害報告書を作成しましょう。"}
+{"vi": "Lỗi lan sang các service khác rồi, cô lập lại đi.", "ja": "障害が他のサービスに波及しているので、切り離してください。"}
+{"vi": "Kiểm tra xem có bị tấn công hay chỉ lỗi hệ thống.", "ja": "攻撃なのか単なるシステム障害なのか、確認してください。"}
+{"vi": "Ưu tiên khôi phục dịch vụ trước, tìm nguyên nhân sau.", "ja": "まずサービス復旧を優先し、原因究明は後にしましょう。"}
+{"vi": "Server chính chết rồi, chuyển sang server dự phòng.", "ja": "メインサーバーが落ちたので、予備サーバーに切り替えてください。"}
+{"vi": "Ghi lại mốc thời gian sự cố để phân tích sau.", "ja": "後で分析できるよう、障害の時系列を記録してください。"}
+{"vi": "Sự cố đã được khắc phục, mình theo dõi thêm vài giờ.", "ja": "障害は復旧しましたが、数時間は監視を続けましょう。"}
+{"vi": "Viết chức năng nhập dữ liệu từ file Excel.", "ja": "Excelファイルからデータを取り込む機能を作ってください。"}
+{"vi": "Xuất báo cáo ra file CSV cho khách tải về.", "ja": "お客様がダウンロードできるよう、レポートをCSVで出力してください。"}
+{"vi": "Dữ liệu bị trùng khi import, em thêm bước kiểm tra.", "ja": "取り込み時にデータが重複するので、チェックの処理を追加してください。"}
+{"vi": "Đồng bộ dữ liệu giữa hai hệ thống mỗi đêm.", "ja": "毎晩、2つのシステム間でデータを同期してください。"}
+{"vi": "Định dạng ngày tháng trong file import không thống nhất.", "ja": "取り込みファイルの日付形式が統一されていません。"}
+{"vi": "Báo cáo tổng hợp nên gộp theo tháng cho dễ nhìn.", "ja": "集計レポートは、見やすいように月ごとにまとめてください。"}
+{"vi": "Kiểm tra dữ liệu đầu vào trước khi lưu vào database.", "ja": "データベースに保存する前に、入力データを検証してください。"}
+{"vi": "File dữ liệu lớn quá, xử lý theo lô cho khỏi treo.", "ja": "データファイルが大きいので、バッチ処理して固まらないようにしてください。"}
+{"vi": "Thêm biểu đồ vào báo cáo cho trực quan hơn.", "ja": "分かりやすくするため、レポートにグラフを追加してください。"}
+{"vi": "Backup dữ liệu trước khi chạy script cập nhật hàng loạt.", "ja": "一括更新スクリプトを実行する前に、データをバックアップしてください。"}
+{"vi": "Dữ liệu cũ cần dọn dẹp định kỳ để nhẹ database.", "ja": "データベースを軽く保つため、古いデータを定期的に整理してください。"}
+{"vi": "Map các cột trong file với đúng trường trong hệ thống.", "ja": "ファイルの各列を、システムの正しい項目に対応付けてください。"}
+{"vi": "Thống kê này tính sai rồi, em kiểm tra công thức.", "ja": "この集計が間違っているので、計算式を確認してください。"}
+{"vi": "Phần này cần kiểm tra lại trước khi bàn giao.", "ja": "この部分は納品前に再確認が必要です。"}
+{"vi": "Chúng ta thống nhất triển khai theo phương án A.", "ja": "案Aで進めることに決めましょう。"}
+{"vi": "Vui lòng xác nhận nội dung này trước cuối ngày.", "ja": "本日中に、こちらの内容をご確認ください。"}
+{"vi": "Cuộc họp hôm nay tập trung vào phần kiến trúc hệ thống.", "ja": "本日の会議は、システム構成に焦点を当てます。"}
+{"vi": "Cần làm rõ yêu cầu trước khi bắt đầu triển khai.", "ja": "実装を始める前に、要件を明確にする必要があります。"}
+{"vi": "Đề nghị hoàn thành phần này trước buổi demo.", "ja": "デモの前に、この部分の完了をお願いします。"}
+{"vi": "Chúng ta sẽ chia công việc thành ba giai đoạn.", "ja": "作業を3つの段階に分けます。"}
+{"vi": "Vấn đề này cần được trao đổi thêm với khách hàng.", "ja": "この件は、お客様とさらに相談する必要があります。"}
+{"vi": "Tiến độ hiện tại đang đúng theo kế hoạch.", "ja": "現在の進捗は、予定通りです。"}
+{"vi": "Cần thêm thông tin để tiếp tục xử lý công việc.", "ja": "作業を続けるには、追加の情報が必要です。"}
+{"vi": "Kết luận cuối cùng là dời tính năng này sang giai đoạn sau.", "ja": "最終的な結論として、この機能は次の段階に延期します。"}
+{"vi": "Vui lòng cập nhật trạng thái công việc lên bảng quản lý.", "ja": "管理ボードに、作業状況を更新してください。"}
+{"vi": "Chúng ta cần thống nhất quy tắc đặt tên trước khi bắt đầu.", "ja": "始める前に、命名規則を統一する必要があります。"}
+{"vi": "Đề nghị mọi người chuẩn bị nội dung trước cuộc họp.", "ja": "会議の前に、各自で内容を準備してください。"}
+{"vi": "Cần ưu tiên xử lý các lỗi nghiêm trọng trước.", "ja": "重大な不具合を優先して対応する必要があります。"}
+{"vi": "Phần backend đã hoàn thành và đang chờ kiểm thử.", "ja": "バックエンドは完了し、テスト待ちの状態です。"}
+{"vi": "Công việc tuần này đã đạt khoảng tám mươi phần trăm.", "ja": "今週の作業は、約80%完了しています。"}
+{"vi": "Hiện tại đang gặp vướng mắc ở phần tích hợp bên ngoài.", "ja": "現在、外部連携の部分で問題が発生しています。"}
+{"vi": "Tiến độ bị chậm khoảng một ngày so với dự kiến.", "ja": "進捗は、予定より1日ほど遅れています。"}
+{"vi": "Báo cáo tiến độ sẽ được gửi vào cuối tuần này.", "ja": "進捗報告は、今週末にお送りします。"}
+{"vi": "Tất cả chức năng chính đã hoạt động ổn định.", "ja": "主要な機能はすべて、安定して動作しています。"}
+{"vi": "Phần kiểm thử dự kiến hoàn tất trong hai ngày tới.", "ja": "テストは、今後2日以内に完了する見込みです。"}
+{"vi": "Công việc còn lại sẽ được chia đều cho các thành viên.", "ja": "残りの作業は、メンバーで均等に分担します。"}
+{"vi": "Bản cập nhật lần này bao gồm hai tính năng mới.", "ja": "今回の更新には、2つの新機能が含まれます。"}
+{"vi": "Vấn đề đã được khắc phục và hệ thống hoạt động bình thường.", "ja": "問題は解決し、システムは正常に稼働しています。"}
+{"vi": "Vui lòng kiểm tra lại phần xử lý thanh toán.", "ja": "決済処理の部分を、再度ご確認ください。"}
+{"vi": "Đề nghị bổ sung xử lý cho trường hợp mất kết nối.", "ja": "接続が切れた場合の処理を追加してください。"}
+{"vi": "Cần xác nhận lại yêu cầu này với phía khách hàng.", "ja": "この要件を、お客様に再確認する必要があります。"}
+{"vi": "Vui lòng gửi lại tài liệu thiết kế mới nhất.", "ja": "最新の設計書を、再度お送りください。"}
+{"vi": "Đề nghị hoàn tất phần này trong hôm nay.", "ja": "本日中に、この部分を完了させてください。"}
+{"vi": "Cần rà soát lại bảo mật trước khi lên môi trường thật.", "ja": "本番環境に上げる前に、セキュリティを点検してください。"}
+{"vi": "Vui lòng ghi rõ các bước tái hiện lỗi trong báo cáo.", "ja": "報告書に、不具合の再現手順を明記してください。"}
+{"vi": "Đề nghị chạy lại toàn bộ kiểm thử trước khi phát hành.", "ja": "リリース前に、すべてのテストを再実行してください。"}
+{"vi": "Cần đảm bảo dữ liệu được sao lưu trước khi cập nhật.", "ja": "更新の前に、データがバックアップされていることを確認してください。"}
+{"vi": "Vui lòng phản hồi trước cuộc họp ngày mai.", "ja": "明日の会議の前に、ご返信ください。"}
+{"vi": "Nội dung này đã được xác nhận và có thể tiến hành.", "ja": "この内容は確認済みで、進めて問題ありません。"}
+{"vi": "Yêu cầu mới là bổ sung chức năng đăng nhập một lần.", "ja": "新しい要件は、シングルサインオン機能の追加です。"}
+{"vi": "Phạm vi công việc này nằm ngoài hợp đồng ban đầu.", "ja": "この作業範囲は、当初の契約外です。"}
+{"vi": "Kết quả kiểm thử cho thấy hệ thống đáp ứng yêu cầu.", "ja": "テスト結果から、システムは要件を満たしています。"}
+{"vi": "Cần thống nhất định dạng dữ liệu trao đổi giữa hai hệ thống.", "ja": "2つのシステム間で、データ形式を統一する必要があります。"}
+{"vi": "Phương án này giúp giảm thời gian xử lý đáng kể.", "ja": "この案により、処理時間を大幅に短縮できます。"}
+{"vi": "Thay đổi yêu cầu có thể ảnh hưởng tới toàn bộ tiến độ.", "ja": "要件の変更は、全体の進捗に影響する可能性があります。"}
+{"vi": "Cần đánh giá rủi ro trước khi áp dụng thay đổi này.", "ja": "この変更を適用する前に、リスクを評価する必要があります。"}
+{"vi": "Tài liệu hướng dẫn sẽ được cập nhật theo phiên bản mới.", "ja": "手順書は、新しいバージョンに合わせて更新します。"}
+{"vi": "Quyết định cuối cùng sẽ được đưa ra trong cuộc họp tới.", "ja": "最終的な決定は、次回の会議で行います。"}
+{"vi": "Thời hạn dự án là cuối quý này.", "ja": "プロジェクトの締め切りは、今四半期末です。"}
+{"vi": "Cần dự phòng thêm thời gian cho các phát sinh ngoài dự kiến.", "ja": "想定外の事態に備えて、予備の時間を確保する必要があります。"}
+{"vi": "Kế hoạch được chia theo từng mốc hàng tháng.", "ja": "計画は、月ごとのマイルストーンに分けられています。"}
+{"vi": "Buổi họp khởi động dự án được đặt vào sáng thứ hai.", "ja": "プロジェクトのキックオフ会議は、月曜の午前に設定されています。"}
+{"vi": "Cần hoàn thành bản thử nghiệm trước khi phát triển đầy đủ.", "ja": "本格的な開発の前に、試作版を完成させる必要があります。"}
+{"vi": "Việc bàn giao sẽ được thực hiện theo từng phần.", "ja": "納品は、段階的に行います。"}
+{"vi": "Nếu phát sinh rủi ro chậm tiến độ, cần thông báo sớm.", "ja": "進捗遅延のリスクが生じた場合は、早めに連絡してください。"}
+{"vi": "Phần khó nhất nên được xử lý sớm để giảm rủi ro.", "ja": "リスクを減らすため、最も難しい部分から着手すべきです。"}
+{"vi": "Cảm ơn mọi người đã tham gia cuộc họp hôm nay.", "ja": "本日はご参加いただき、ありがとうございました。"}
+{"vi": "Nếu có câu hỏi, vui lòng trao đổi trong nhóm chung.", "ja": "ご質問があれば、共有グループでお知らせください。"}
+{"vi": "Biên bản họp sẽ được chia sẻ sau khi kết thúc.", "ja": "議事録は、会議終了後に共有します。"}
+{"vi": "Cuộc họp được dời sang hai giờ chiều.", "ja": "会議は、午後2時に変更されました。"}
+{"vi": "Vui lòng bật micro khi cần phát biểu.", "ja": "発言する際は、マイクをオンにしてください。"}
+{"vi": "Nội dung màn hình đang được chia sẻ cho mọi người.", "ja": "画面を全員に共有しています。"}
+{"vi": "Chúng ta tạm dừng ở đây và tiếp tục vào ngày mai.", "ja": "本日はここまでにして、明日続けましょう。"}
+{"vi": "Tuần tới có ngày nghỉ lễ, cần điều chỉnh kế hoạch.", "ja": "来週は祝日があるため、計画の調整が必要です。"}
+{"vi": "Cần sự phối hợp giữa các nhóm để hoàn thành đúng hạn.", "ja": "期限内に完了するには、チーム間の連携が必要です。"}
+{"vi": "Mọi thay đổi cần được ghi lại vào tài liệu chung.", "ja": "すべての変更は、共有ドキュメントに記録する必要があります。"}
+{"vi": "Con bug này khó tái hiện, chỉ xảy ra lúc mạng chậm.", "ja": "このバグは再現が難しく、ネットワークが遅いときだけ発生します。"}
+{"vi": "Cần tìm nguyên nhân gốc của bug trước khi sửa.", "ja": "修正する前に、バグの根本原因を突き止める必要があります。"}
+{"vi": "Cần tạo một nhánh mới từ main cho tính năng này.", "ja": "この機能のために、mainから新しいブランチを作成する必要があります。"}
+{"vi": "Nhánh dev đang bị lệch nhiều commit so với main.", "ja": "devブランチは、mainより多くのコミット分ずれています。"}
+{"vi": "Chạy đoạn code này để kiểm tra kết quả.", "ja": "このコードを実行して、結果を確認してください。"}
+{"vi": "Chạy lại server sau khi thay đổi cấu hình.", "ja": "設定を変更した後、サーバーを再起動してください。"}
+{"vi": "Lệnh migration cần được chạy trên môi trường thật.", "ja": "マイグレーションコマンドは、本番環境で実行する必要があります。"}
+{"vi": "Gọi API này để lấy danh sách người dùng.", "ja": "このAPIを呼び出して、ユーザー一覧を取得してください。"}
+{"vi": "Hàm này được gọi mỗi khi người dùng bấm nút.", "ja": "この関数は、ユーザーがボタンを押すたびに呼び出されます。"}
+{"vi": "Cổng 8000 đang bị một tiến trình khác chiếm.", "ja": "ポート8000は、別のプロセスが使用中です。"}
+{"vi": "Cần mở cổng 443 cho kết nối HTTPS.", "ja": "HTTPS接続のために、ポート443を開ける必要があります。"}
+{"vi": "Bảng users thiếu cột địa chỉ email.", "ja": "usersテーブルに、メールアドレスのカラムが不足しています。"}
+{"vi": "Cần thêm ràng buộc khóa ngoại giữa hai bảng.", "ja": "2つのテーブル間に、外部キー制約を追加する必要があります。"}
+{"vi": "Trường ngày tháng đang sai định dạng.", "ja": "日付のフィールドが、形式を間違えています。"}
+{"vi": "Mỗi bản ghi phải có trường mã định danh riêng.", "ja": "各レコードには、固有のIDフィールドが必要です。"}
+{"vi": "Khóa chính của bảng này là cột id.", "ja": "このテーブルの主キーは、idカラムです。"}
+{"vi": "Cần đánh index cho khóa tìm kiếm để truy vấn nhanh.", "ja": "検索を速くするため、検索キーにインデックスを張る必要があります。"}
+{"vi": "Môi trường staging đang gặp lỗi kết nối.", "ja": "ステージング環境で、接続エラーが発生しています。"}
+{"vi": "Biến môi trường chưa được cấu hình trên máy chủ.", "ja": "サーバーで、環境変数が設定されていません。"}
+{"vi": "Cần cập nhật thư viện này lên phiên bản mới nhất.", "ja": "このライブラリを、最新バージョンに更新する必要があります。"}
+{"vi": "Thư viện xử lý ngày tháng đang bị lỗi múi giờ.", "ja": "日付処理のライブラリで、タイムゾーンの不具合があります。"}
+{"vi": "Gói phụ thuộc này có lỗ hổng bảo mật.", "ja": "この依存パッケージに、セキュリティの脆弱性があります。"}
+{"vi": "Phiên đăng nhập đã hết hạn, cần đăng nhập lại.", "ja": "ログインセッションが切れたため、再ログインが必要です。"}
+{"vi": "Xử lý này nên chạy trên một luồng riêng.", "ja": "この処理は、別のスレッドで実行すべきです。"}
+{"vi": "Luồng dữ liệu giữa hai service đang bị nghẽn.", "ja": "2つのサービス間のデータフローが、詰まっています。"}
+{"vi": "Khối lệnh này bị lặp lại ở nhiều nơi.", "ja": "このコードブロックが、複数の箇所で重複しています。"}
+{"vi": "Bản ghi này bị trùng, cần thêm ràng buộc duy nhất.", "ja": "このレコードが重複しているので、ユニーク制約を追加する必要があります。"}
+{"vi": "Địa chỉ IP của máy chủ đã thay đổi.", "ja": "サーバーのIPアドレスが変わりました。"}
+{"vi": "Build bản mới mất khoảng mười phút.", "ja": "新しいビルドには、約10分かかります。"}
+{"vi": "Quá trình build thất bại do thiếu biến môi trường.", "ja": "環境変数が不足しているため、ビルドが失敗しました。"}
+{"vi": "Bản release lần này gồm hai tính năng mới.", "ja": "今回のリリースには、2つの新機能が含まれます。"}
+{"vi": "Ứng dụng client gọi API này rất thường xuyên.", "ja": "クライアントアプリは、このAPIを頻繁に呼び出します。"}
+{"vi": "Khách hàng yêu cầu bổ sung thêm một tính năng.", "ja": "お客様から、機能追加のご要望がありました。"}
+{"vi": "Cấu trúc cây thư mục của dự án khá phức tạp.", "ja": "プロジェクトのディレクトリツリー構造は、やや複雑です。"}
+{"vi": "Nút bấm này chưa gắn sự kiện xử lý.", "ja": "このボタンに、処理イベントが設定されていません。"}
+{"vi": "Mỗi nút trong cụm máy chủ cần được giám sát.", "ja": "クラスタ内の各ノードを、監視する必要があります。"}
+{"vi": "Hàng đợi tin nhắn đang đầy, consumer xử lý không kịp.", "ja": "メッセージキューがいっぱいで、コンシューマーの処理が追いついていません。"}
+{"vi": "Bộ đệm chưa được xóa nên vẫn hiện dữ liệu cũ.", "ja": "キャッシュがクリアされていないため、古いデータが表示されます。"}
+{"vi": "Tầng nghiệp vụ nên tách khỏi tầng truy cập dữ liệu.", "ja": "ビジネス層は、データアクセス層から分離すべきです。"}
+{"vi": "Điểm cuối này trả về lỗi khi thiếu tham số.", "ja": "このエンドポイントは、パラメータが不足するとエラーを返します。"}
+{"vi": "Phần phụ thuộc của thư viện này quá nhiều.", "ja": "このライブラリは、依存関係が多すぎます。"}
+{"vi": "Hệ thống lắng nghe sự kiện khi có đơn hàng mới.", "ja": "システムは、新規注文のイベントを監視します。"}
+{"vi": "Cần ghi rõ phiên bản trong tài liệu bàn giao.", "ja": "納品資料に、バージョンを明記する必要があります。"}
+{"vi": "Thư mục gốc của dự án chứa file cấu hình chính.", "ja": "プロジェクトのルートディレクトリに、主要な設定ファイルがあります。"}
+{"vi": "Tiến trình này chiếm quá nhiều tài nguyên hệ thống.", "ja": "このプロセスは、システムリソースを消費しすぎています。"}
+{"vi": "Lỗi nằm ở dòng bốn mươi hai của tệp xử lý.", "ja": "エラーは、処理ファイルの42行目にあります。"}
+{"vi": "Cần áp bản vá bảo mật trước cuối tuần.", "ja": "週末までに、セキュリティパッチを適用する必要があります。"}
+{"vi": "Danh sách này kết xuất chậm khi có nhiều bản ghi.", "ja": "このリストは、レコードが多いと描画が遅くなります。"}

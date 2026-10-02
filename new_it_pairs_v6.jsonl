@@ -1,0 +1,67 @@
+{"vi": "Vì Git đã được cài đặt, điều đầu tiên cần làm là tạo tài khoản GitHub.", "ja": "Gitはすでにインストール済ですので、先ず行うことは、GitHubアカウントの作成です。"}
+{"vi": "Việc thêm bình luận giúp mã dễ đọc hơn.", "ja": "コメントを付けるとコードが読みやすくなります。"}
+{"vi": "Bạn cần cài đặt máy chủ VNC trên Raspberry Pi.", "ja": "ラズベリー・パイ上にはVNCサーバをインストールする必要があります。"}
+{"vi": "Điều này sẽ hoàn tất việc đăng ký tài khoản GitHub của bạn.", "ja": "これでGitHubアカウントの登録が完了します。"}
+{"vi": "Bạn có thể xem mã nguồn để có được quyền tự do đầu tiên này.", "ja": "この第1の自由を得るために,ソースコードを見ることができるのです。"}
+{"vi": "Tôi không biết mật mã.", "ja": "コードの方は 分かりません。"}
+{"vi": "Làm thế nào để tôi học mã?", "ja": "コードを学ぶにはどうしたらいいのでしょうか？"}
+{"vi": "Mã nguồn là gì?", "ja": "ソース・コードとは何ですか?"}
+{"vi": "Đó là do lỗi", "ja": "バグがあったせいです"}
+{"vi": "Khi nào tôi có thể kiểm tra?", "ja": "いつテストできますか?"}
+{"vi": "Bạn cũng có thể lấy dữ liệu của bạn từ cơ sở dữ liệu", "ja": "データベースから あなたのデータを取り出すこともできます"}
+{"vi": "Nhập lệnh là git config --global user.name và nhập tên người dùng bạn muốn sử dụng ở đây.", "ja": "gitconfig--globaluser.nameというコマンドをタイプし、ここに、使用したいユーザー名を入力します。"}
+{"vi": "Kết nối với máy chủ trung tâm thông qua bộ chuyển mạch", "ja": "スイッチングハブ経由で中央サーバーに接続します"}
+{"vi": "Địa chỉ ip được tạo bởi máy tính, đó là sơ đồ về máy chủ và pc", "ja": "コンピュータで生成したIPアドレス つまりサーバやPCの図です"}
+{"vi": "Bây giờ, thoát khỏi GitBash.", "ja": "ここで、GitBashを終了します。"}
+{"vi": "Chúng tôi đã yêu cầu họ thực hiện mã", "ja": "コードを彼らに実行してもらいました"}
+{"vi": "Bạn phải sử dụng lệnh library để cho R biết gói nào cần tải.", "ja": "libraryコマンドを使って,Rにどのパッケージをロードするか教える必要があります。"}
+{"vi": "Hàm dput sẽ viết ra mã R có thể được sử dụng để tái tạo đối tượng R.", "ja": "dput関数はRオブジェクトを再構築するのに使えるRのコードを書き出します。"}
+{"vi": "Core Group này quản lý mã nguồn của R.", "ja": "このCoreGroupが,Rのソースコードを管理しています。"}
+{"vi": "Sau khi library(ggplot2), nếu bạn nhập search(), tất cả các hàm tạo nên ggplot2 sẽ được hiển thị.", "ja": "library(ggplot2)の後にsearch()とタイプすると,ggplot2を構成する全ての関数が表示されます。"}
+{"vi": "Phiền anh xác nhận giúp tài liệu này trước ngày mai được không ạ.", "ja": "お手数ですが、この資料を明日までに確認していただけますでしょうか。"}
+{"vi": "Xin lỗi làm phiền, chị liên hệ lại giúp em về việc đó sau được không ạ.", "ja": "恐れ入りますが、その件について後ほどご連絡いただけますでしょうか。"}
+{"vi": "Anh sửa giúp lỗi này trong tuần này được không?", "ja": "この不具合を今週中に修正していただけますか。"}
+{"vi": "Chị review code giúp em được không ạ.", "ja": "コードレビューをお願いできますでしょうか。"}
+{"vi": "Nếu anh chia sẻ giúp file cấu hình thì em cảm ơn nhiều.", "ja": "設定ファイルを共有していただければ幸いです。"}
+{"vi": "Để chắc chắn, chị test lại giúp một lần nữa được không ạ.", "ja": "念のため、もう一度テストしていただけますでしょうか。"}
+{"vi": "Việc này anh xử lý giúp được không ạ.", "ja": "この件、対応していただくことは可能でしょうか。"}
+{"vi": "Chị cập nhật giúp tài liệu thì em cảm ơn.", "ja": "資料を更新していただけると助かります。"}
+{"vi": "Anh xem giúp em cái pull request này được không?", "ja": "このプルリクエストを確認していただけますか。"}
+{"vi": "Nhờ chị gửi lại file báo cáo giúp em với.", "ja": "報告書のファイルを再送していただけますでしょうか。"}
+{"vi": "Mong anh sửa giúp lỗi ở phần đăng nhập trước cuối tuần.", "ja": "週末までにログイン部分のバグを修正していただけますでしょうか。"}
+{"vi": "Anh triển khai giúp bản này lên môi trường staging được không ạ?", "ja": "こちらをステージング環境にデプロイしていただけますか。"}
+{"vi": "Chị confirm lại giúp em thông tin khách hàng nhé.", "ja": "顧客情報を確認していただけますでしょうか。"}
+{"vi": "Anh check giúp em cái config này với.", "ja": "この設定を確認していただけますか。"}
+{"vi": "Chị gửi giúp em link tài liệu đó nhé.", "ja": "その資料のリンクを送っていただけますか。"}
+{"vi": "Em nhờ anh update giúp phiên bản mới lên server.", "ja": "新しいバージョンをサーバーに更新していただけますか。"}
+{"vi": "Anh test giúp em tính năng này trước khi release.", "ja": "リリース前にこの機能をテストしていただけますか。"}
+{"vi": "Chị deploy giúp em bản fix này lên production được không.", "ja": "この修正版を本番環境にデプロイしていただけますか。"}
+{"vi": "Anh merge giúp em cái pull request đó với.", "ja": "そのプルリクエストをマージしていただけますか。"}
+{"vi": "Nhờ anh restart giúp em cái service bị treo.", "ja": "フリーズしているサービスを再起動していただけますか。"}
+{"vi": "Dạo này em hơi ngộp việc, có ai rảnh giúp em không?", "ja": "最近ちょっと仕事が多くて大変なので、誰か手伝ってもらえますか。"}
+{"vi": "Cảm ơn anh đã giúp đỡ em rất nhiều trong dự án này.", "ja": "このプロジェクトでいろいろ助けていただき、ありがとうございます。"}
+{"vi": "Mọi người thấy ổn thì mình bắt đầu triển khai luôn nhé.", "ja": "皆さんよろしければ、そのまま展開を始めましょう。"}
+{"vi": "Nếu không ai phản đối thì mình chốt phương án này nhé.", "ja": "反対がなければ、この案で決定しましょう。"}
+{"vi": "Tuần sau mình họp lại để review tiến độ nhé mọi người.", "ja": "来週、進捗レビューのためにまた集まりましょう。"}
+{"vi": "Cả nhóm đồng ý thì mình merge lên main luôn nhé.", "ja": "チーム全員が同意すれば、mainにマージしましょう。"}
+{"vi": "Anh sửa gấp lỗi này trước khi deploy, quan trọng lắm.", "ja": "デプロイ前に、このバグを至急修正してください。"}
+{"vi": "Bắt buộc phải test kỹ trước khi release, đừng bỏ qua bước này.", "ja": "リリース前に必ずしっかりテストしてください。省略しないでください。"}
+{"vi": "Hay là mình thử cách tiếp cận khác xem sao.", "ja": "別のアプローチを試してみましょう。"}
+{"vi": "Giờ mình chuyển qua phần tiếp theo thôi.", "ja": "では、次のパートに移りましょう。"}
+{"vi": "Theo em thì nên deploy vào cuối tuần, mọi người thấy sao?", "ja": "週末にデプロイするのはどうでしょうか。"}
+{"vi": "Không ai phản đối thì chốt kiến trúc này luôn nhé.", "ja": "反対がなければ、このアーキテクチャで決定しましょう。"}
+{"vi": "Mình nghỉ giải lao 10 phút rồi họp tiếp nhé.", "ja": "10分休憩してから、また会議を続けましょう。"}
+{"vi": "Cả team thống nhất thì mình launch vào thứ Hai.", "ja": "チーム全員が同意すれば、月曜日にローンチしましょう。"}
+{"vi": "Anh nghĩ mình nên viết test trước khi code, mọi người nghĩ sao?", "ja": "コードの前にテストを書くべきだと思いますが、どうでしょうか。"}
+{"vi": "Deploy gấp bản fix này lên production ngay, đừng chờ gì cả.", "ja": "この修正版を今すぐ本番環境にデプロイしてください。待たないでください。"}
+{"vi": "Bắt buộc phải backup database trước khi migrate.", "ja": "マイグレーションの前に、必ずデータベースをバックアップしてください。"}
+{"vi": "Restart lại server ngay, đang down rồi đó.", "ja": "サーバーをすぐ再起動してください。ダウンしています。"}
+{"vi": "Đừng merge khi CI chưa pass, quan trọng lắm đó.", "ja": "CIが通るまでマージしないでください。とても重要です。"}
+{"vi": "Fix gấp lỗi bảo mật này trước khi release.", "ja": "リリース前に、このセキュリティの不具合を至急修正してください。"}
+{"vi": "Thật ngại quá, không biết anh có thể xác nhận giúp việc này vào ngày mai được không ạ.", "ja": "誠に恐縮ですが、この件について明日ご確認いただくわけにはいかないでしょうか。"}
+{"vi": "Không biết chị có thể dành chút thời gian giải thích lại phần này giúp em được không ạ.", "ja": "お手数ですが、この部分について改めて説明していただけますでしょうか。"}
+{"vi": "Thật sự ngại quá, anh gửi lại tài liệu giúp em được không ạ.", "ja": "大変恐縮ですが、資料を再送していただくことは可能でしょうか。"}
+{"vi": "Nếu không phiền thì mong chị xem qua báo cáo này giúp em trước khi gửi khách hàng.", "ja": "お手数でなければ、お客様に送付する前にこの報告書をご確認いただければと思います。"}
+{"vi": "Chị build giúp em bản mới nhất trước khi demo.", "ja": "デモの前に最新版をビルドしていただけますか。"}
+{"vi": "Anh backup giúp em dữ liệu trước khi xoá.", "ja": "削除する前にデータをバックアップしていただけますか。"}
+{"vi": "Nhờ chị format lại giúp em đoạn code này theo chuẩn team.", "ja": "チームの規約に合わせて、このコードをフォーマットしていただけますか。"}
