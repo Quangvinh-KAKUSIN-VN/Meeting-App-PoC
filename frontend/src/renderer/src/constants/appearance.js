@@ -11,9 +11,14 @@ export const DEFAULT_APPEARANCE = {
   isLocked: false
 }
 
+/*
+ * wsPath = ngôn ngữ NÓI (chọn ASR), target = ngôn ngữ đích (?target= gửi
+ * cho backend). Thứ tự khai báo ở đây cũng là thứ tự nút đổi chiều xoay vòng.
+ */
 export const LANGUAGE_DIRECTIONS = {
   'ja-vi': {
     wsPath: 'ja',
+    target: 'vi',
     sourceCode: 'JA',
     targetCode: 'VI',
     sourceName: 'Japanese',
@@ -24,12 +29,35 @@ export const LANGUAGE_DIRECTIONS = {
 
   'vi-ja': {
     wsPath: 'vi',
+    target: 'ja',
     sourceCode: 'VI',
     targetCode: 'JA',
     sourceName: 'Vietnamese',
     targetName: 'Japanese',
     listeningLabel: 'Đang lắng nghe tiếng Việt',
     hintText: 'Chọn nguồn âm thanh rồi bắt đầu phiên dịch Việt → Nhật.'
+  },
+
+  'en-vi': {
+    wsPath: 'en',
+    target: 'vi',
+    sourceCode: 'EN',
+    targetCode: 'VI',
+    sourceName: 'English',
+    targetName: 'Vietnamese',
+    listeningLabel: 'Đang lắng nghe tiếng Anh',
+    hintText: 'Chọn nguồn âm thanh rồi bắt đầu phiên dịch Anh → Việt.'
+  },
+
+  'vi-en': {
+    wsPath: 'vi',
+    target: 'en',
+    sourceCode: 'VI',
+    targetCode: 'EN',
+    sourceName: 'Vietnamese',
+    targetName: 'English',
+    listeningLabel: 'Đang lắng nghe tiếng Việt',
+    hintText: 'Chọn nguồn âm thanh rồi bắt đầu phiên dịch Việt → Anh.'
   }
 }
 

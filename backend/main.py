@@ -68,7 +68,18 @@ VI_DECODER = MODEL_VI_DIR / "decoder.onnx"
 VI_JOINER = MODEL_VI_DIR / "joiner.int8.onnx"
 VI_TOKENS = MODEL_VI_DIR / "tokens.txt"
 
-M2M100_DIR = MODELS_DIR / "m2m100_418M_int8"
+# Parakeet TDT 0.6B v2 (tiếng Anh, có sẵn dấu câu + viết hoa). KHÔNG bắt buộc:
+# thiếu thư mục này thì backend vẫn chạy ja↔vi như cũ, chỉ tắt chiều en.
+MODEL_EN_DIR = MODELS_DIR / "parakeet-en"
+EN_ENCODER = MODEL_EN_DIR / "encoder.int8.onnx"
+EN_DECODER = MODEL_EN_DIR / "decoder.int8.onnx"
+EN_JOINER = MODEL_EN_DIR / "joiner.int8.onnx"
+EN_TOKENS = MODEL_EN_DIR / "tokens.txt"
+
+# KATOBA_MT_DIR: trỏ sang bản MT khác để A/B (vd. ../old_models/m2m100_418M_int8_v6)
+# mà không phải ghi đè bản production.
+_mt_dir_env = os.environ.get("KATOBA_MT_DIR", "").strip()
+M2M100_DIR = Path(_mt_dir_env) if _mt_dir_env else MODELS_DIR / "m2m100_418M_int8"
 SILERO_VAD_FILE = MODELS_DIR / "silero_vad.onnx"
 GLOSSARY_FILE = BASE_DIR / "glossary.json"
 
@@ -82,8 +93,10 @@ _people_env = os.environ.get("KATOBA_PEOPLE_FILE", "").strip()
 PEOPLE_FILE = Path(_people_env) if _people_env else BASE_DIR / "people.json"
 LOG_FILE = DATA_DIR / "transcript_log.txt"
 
-MODEL_VERSION = "v6"          # LoRA v6: +67 câu (kính ngữ lồng, giúp+động từ,
-                              # rủ rê/lệnh), contrast 14/16, chrF tăng cả 4 hướng
+MODEL_VERSION = "v9"          # LoRA v9: 4 chiều ja↔vi, en↔vi; nhiễu sát app (số bằng chữ,
+                              # placeholder tên PnA, VAD gộp câu) + thuật ngữ BrSE, câu ngắn.
+                              # eval_mt.py so với v6: chrF ja-vi 51.3→57.9, vi-ja 39.7→43.6,
+                              # en-vi 49.9→57.0, vi-en 59.8→71.7. Bản v6 cất ở old_models/.
 
 # ---------------------------------------------------------------------------
 # CẤU HÌNH
@@ -146,6 +159,8 @@ MIN_LOGPROB_PARTIAL = MIN_LOGPROB_FINAL - 1.0
 # cần sửa code. Đặt -99 để tắt gate. Chiều nào ASR không trả ys_log_probs
 # (score=None) thì tự động không bị gate.
 MIN_ASR_LOGPROB = float(os.environ.get("KATOBA_MIN_ASR_LOGPROB", "-1.0"))
+# Chiều EN chưa có log họp thật để calibrate -> mặc định TẮT gate (-99).
+MIN_ASR_LOGPROB_EN = float(os.environ.get("KATOBA_MIN_ASR_LOGPROB_EN", "-99"))
 
 # FIX-v5 (2) — hệ số nở token TÁCH THEO CHIỀU.
 # Bản cũ dùng chung 2.5 cho cả hai chiều, nhưng tỉ lệ ngược nhau hoàn toàn:
@@ -153,7 +168,17 @@ MIN_ASR_LOGPROB = float(os.environ.get("KATOBA_MIN_ASR_LOGPROB", "-1.0"))
 #           NHIỀU token. Trần 2.5 quá chặt -> câu bị CẮT CỤT giữa chừng.
 #   vi→ja : nguồn tiếng Việt đơn âm -> n_src lớn; đích tiếng Nhật dày -> cần ÍT
 #           token. Trần 2.5 quá lỏng -> model lan man.
-LEN_MULT = {("ja", "vi"): 4.0, ("vi", "ja"): 2.0}
+LEN_MULT = {("ja", "vi"): 4.0, ("vi", "ja"): 2.0,
+            # Cùng logic: đích tiếng Việt tách âm tiết cần nhiều token, đích
+            # tiếng Nhật dày cần ít. Chưa đo trên log thật — chỉnh khi có số.
+            ("en", "vi"): 3.0, ("vi", "en"): 2.0}
+
+# Các chiều sản phẩm hỗ trợ. KHÔNG có en↔ja — chiều nào không nằm đây thì
+# endpoint từ chối kết nối, dù M2M-100 về kỹ thuật dịch được.
+ALLOWED_DIRECTIONS = set(LEN_MULT)
+
+# Chiều dịch mặc định khi client không gửi ?target= (giữ tương thích bản cũ).
+DEFAULT_TARGET = {"ja": "vi", "vi": "ja", "en": "vi"}
 
 BEAM_FINAL = 4
 BEAM_PARTIAL = 1          # bản nháp: đổi chất lượng lấy độ trễ
@@ -206,6 +231,10 @@ def _check_files() -> None:
         _fatal("❌ Thiếu model:", *[f"   • {m}" for m in missing])
 
 
+def _has_en() -> bool:
+    return all(p.exists() for p in (EN_ENCODER, EN_DECODER, EN_JOINER, EN_TOKENS))
+
+
 def _check_ram() -> None:
     try:
         import psutil
@@ -256,6 +285,16 @@ def _load_vi():
     )
 
 
+def _load_en():
+    en_threads = int(os.environ.get("KATOBA_ASR_EN_THREADS", "4"))
+    return sherpa_onnx.OfflineRecognizer.from_transducer(
+        encoder=str(EN_ENCODER), decoder=str(EN_DECODER), joiner=str(EN_JOINER),
+        tokens=str(EN_TOKENS), num_threads=en_threads, sample_rate=SAMPLE_RATE,
+        feature_dim=80, decoding_method="greedy_search", provider="cpu",
+        model_type="nemo_transducer",
+    )
+
+
 def _load_mt():
     """
     FIX-v5 (3) — BỎ nhánh fallback tải tokenizer từ HuggingFace.
@@ -272,8 +311,9 @@ def _load_mt():
     thì không còn state chia sẻ, bỏ được lock.
     """
     try:
-        tok_ja = AutoTokenizer.from_pretrained(str(M2M100_DIR), local_files_only=True)
-        tok_vi = AutoTokenizer.from_pretrained(str(M2M100_DIR), local_files_only=True)
+        tokenizers = {lang: AutoTokenizer.from_pretrained(str(M2M100_DIR),
+                                                          local_files_only=True)
+                      for lang in ("ja", "vi", "en")}
     except Exception as err:
         _fatal("❌ Không nạp được tokenizer từ thư mục model.",
                f"   {M2M100_DIR}",
@@ -282,36 +322,49 @@ def _load_mt():
                "   ct2-transformers-converter ... --copy_files "
                "sentencepiece.bpe.model vocab.json tokenizer_config.json")
 
-    tok_ja.src_lang = "ja"
-    tok_vi.src_lang = "vi"
+    for lang, tok in tokenizers.items():
+        tok.src_lang = lang
 
     # inter_threads=2 cho phép CT2 chạy hai bản dịch song song (một chiều mỗi
     # luồng). Đo lại RSS qua /v1/health sau khi đổi: nếu bộ nhớ tăng gần gấp đôi
     # thì bản CT2 này nhân bản trọng số, hạ về 1.
     tr = ctranslate2.Translator(str(M2M100_DIR), device="cpu",
                                 compute_type="int8", inter_threads=2, intra_threads=2)
-    return tr, {"ja": tok_ja, "vi": tok_vi}
+    return tr, tokenizers
 
 
 _check_files()
 _check_ram()
 
-print(f"⏳ Nạp 3 model song song... (MT {MODEL_VERSION})")
+HAS_EN = _has_en()
+if not HAS_EN:
+    print(f"ℹ️  Không có ASR tiếng Anh tại {MODEL_EN_DIR} — tắt chiều en")
+
+print(f"⏳ Nạp {4 if HAS_EN else 3} model song song... (MT {MODEL_VERSION})")
 print(f"🔧 VERBOSE={'BẬT' if VERBOSE else 'TẮT'} | TRANSCRIPT_LOG={'BẬT' if TRANSCRIPT_LOG else 'TẮT'}"
       f"   (bật log chi tiết: chạy  $env:KATOBA_VERBOSE=\"1\"  trong CÙNG cửa sổ PowerShell trước khi python main.py)")
 _t0 = time.time()
 _rss0 = _rss_gb()
 
-with ThreadPoolExecutor(max_workers=3) as _pool:
+with ThreadPoolExecutor(max_workers=4) as _pool:
     _f_ja = _pool.submit(_load_ja)
     _f_vi = _pool.submit(_load_vi)
+    _f_en = _pool.submit(_load_en) if HAS_EN else None
     _f_mt = _pool.submit(_load_mt)
     recognizer_ja = _f_ja.result()
     recognizer_vi = _f_vi.result()
+    recognizer_en = _f_en.result() if _f_en else None
     translator, TOKENIZERS = _f_mt.result()
 
 recognizer_ja_lock = Lock()
 recognizer_vi_lock = Lock()
+recognizer_en_lock = Lock()
+
+# Ngôn ngữ NÓI -> (recognizer, lock). Chỉ chứa ngôn ngữ đã nạp được model.
+RECOGNIZERS = {"ja": (recognizer_ja, recognizer_ja_lock),
+               "vi": (recognizer_vi, recognizer_vi_lock)}
+if recognizer_en is not None:
+    RECOGNIZERS["en"] = (recognizer_en, recognizer_en_lock)
 # FIX-v5 (4) — không còn translator_lock. CT2 Translator tự an toàn đa luồng.
 
 print(f"✅ Nạp xong sau {time.time() - _t0:.1f}s "
@@ -402,6 +455,21 @@ VI_CONTINUES = re.compile(
     re.IGNORECASE,
 )
 
+# Tiếng Anh: cùng nguyên tắc — mạo từ, giới từ, liên từ, trợ động từ đứng
+# cuối đoạn thì câu chưa xong. Parakeet-EN tự thêm dấu câu, nên đoạn kết bằng
+# . ? ! thì không bao giờ khớp (regex neo vào từ ngay trước cuối chuỗi).
+EN_CONTINUES = re.compile(
+    r"\b(and|but|or|so|because|if|when|while|although|though|unless|than|"
+    r"the|a|an|this|that|these|those|my|your|our|their|his|her|its|"
+    r"of|to|in|on|at|for|with|from|by|about|into|onto|over|under|after|"
+    r"before|between|through|during|like|as|"
+    r"is|are|was|were|be|been|will|would|can|could|should|must|might|"
+    r"have|has|had|do|does|did|not|very|really|also|um|uh|er)"
+    r",?\s*$",
+    re.IGNORECASE,
+)
+_CONTINUES = {"ja": JA_CONTINUES, "vi": VI_CONTINUES, "en": EN_CONTINUES}
+
 MAX_BUFFER_CHARS = 150
 MAX_CONTINUATIONS = 2      # tối đa 2 đoạn nối -> chốt, tránh trễ dồn quá 30s
 
@@ -434,8 +502,7 @@ class SentenceBuffer:
         self.pauses = 0
 
     def _continues(self, text: str) -> bool:
-        pat = JA_CONTINUES if self.lang == "ja" else VI_CONTINUES
-        return bool(pat.search(text.strip()))
+        return bool(_CONTINUES[self.lang].search(text.strip()))
 
     def push(self, chunk: str, truncated: bool) -> tuple[int, str, bool] | None:
         """truncated=True nghĩa là VAD cắt vì chạm trần thời lượng, không phải im lặng."""
@@ -628,6 +695,7 @@ async def handle_stream(websocket: WebSocket, recognizer, recognizer_lock: Lock,
     # Đoạn dài xấp xỉ trần -> VAD cắt vì chạm giới hạn, KHÔNG phải vì im lặng.
     trunc_threshold = prof["max_speech"] - 0.25
 
+    asr_gate = MIN_ASR_LOGPROB_EN if src_lang == "en" else MIN_ASR_LOGPROB
     queue: asyncio.Queue = asyncio.Queue(maxsize=SEGMENT_QUEUE_MAX)
     post = PostProcessor(GLOSSARY, cache=SHARED_CACHE)
     buffer = SentenceBuffer(src_lang)
@@ -684,10 +752,10 @@ async def handle_stream(websocket: WebSocket, recognizer, recognizer_lock: Lock,
 
                 # ĐỢT-3 — gate ASR. Đặt TRƯỚC buffer/dịch: segment rác không
                 # được vào câu, không tốn MT (segment rác dài từng ăn 1.4s MT).
-                if asr_score is not None and asr_score < MIN_ASR_LOGPROB:
+                if asr_score is not None and asr_score < asr_gate:
                     if VERBOSE:
                         print(f"🔇 ASR gate (logprob={asr_score:.2f} "
-                              f"< {MIN_ASR_LOGPROB}): {raw!r}")
+                              f"< {asr_gate}): {raw!r}")
                     continue
 
                 text_src = post.prepare_source(raw, src_lang)
@@ -840,14 +908,20 @@ async def handle_stream(websocket: WebSocket, recognizer, recognizer_lock: Lock,
 # ENDPOINT
 # ---------------------------------------------------------------------------
 
-@app.websocket("/ws/audio/ja")
-async def websocket_ja(websocket: WebSocket) -> None:
-    await handle_stream(websocket, recognizer_ja, recognizer_ja_lock, "ja", "vi")
+@app.websocket("/ws/audio/{src_lang}")
+async def websocket_audio(websocket: WebSocket, src_lang: str) -> None:
+    """
+    /ws/audio/<ngôn ngữ nói>?target=<ngôn ngữ đích>&source=system|microphone
 
-
-@app.websocket("/ws/audio/vi")
-async def websocket_vi(websocket: WebSocket) -> None:
-    await handle_stream(websocket, recognizer_vi, recognizer_vi_lock, "vi", "ja")
+    Không gửi target thì dùng DEFAULT_TARGET — /ws/audio/ja và /ws/audio/vi
+    chạy y hệt bản cũ (ja→vi, vi→ja).
+    """
+    tgt_lang = websocket.query_params.get("target") or DEFAULT_TARGET.get(src_lang, "")
+    if src_lang not in RECOGNIZERS or (src_lang, tgt_lang) not in ALLOWED_DIRECTIONS:
+        await websocket.close(code=1008, reason=f"unsupported {src_lang}->{tgt_lang}")
+        return
+    recognizer, lock = RECOGNIZERS[src_lang]
+    await handle_stream(websocket, recognizer, lock, src_lang, tgt_lang)
 
 
 @app.get("/v1/health")
@@ -868,6 +942,10 @@ async def models() -> dict:
                    "device": "cpu", "hotwords": False},
         "asr_vi": {"engine": "sherpa-onnx", "arch": "Zipformer transducer",
                    "quant": "int8", "device": "cpu", "hotwords": False},
+        "asr_en": ({"engine": "sherpa-onnx", "arch": "Parakeet TDT 0.6B v2",
+                    "quant": "int8", "device": "cpu", "hotwords": False}
+                   if "en" in RECOGNIZERS else None),
+        "directions": sorted(f"{s}-{t}" for s, t in ALLOWED_DIRECTIONS if s in RECOGNIZERS),
         "mt": {"engine": "ctranslate2", "arch": f"M2M-100 418M + LoRA {MODEL_VERSION}",
                "quant": "int8", "device": "cpu",
                "beam": {"final": BEAM_FINAL, "partial": BEAM_PARTIAL},
@@ -881,7 +959,8 @@ async def models() -> dict:
 
 
 if __name__ == "__main__":
-    print(f"🚀 http://{HOST}:{PORT}  |  ws://{HOST}:{PORT}/ws/audio/{{ja,vi}}")
+    print(f"🚀 http://{HOST}:{PORT}  |  ws://{HOST}:{PORT}/ws/audio/"
+          f"{{{','.join(RECOGNIZERS)}}}?target=...")
     if TRANSCRIPT_LOG:
         print("⚠️  TRANSCRIPT_LOG ĐANG BẬT — nội dung phát ngôn sẽ được ghi ra đĩa.")
     uvicorn.run(app, host=HOST, port=PORT, ws_ping_interval=20, ws_ping_timeout=20)

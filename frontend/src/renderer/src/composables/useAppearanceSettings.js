@@ -50,7 +50,7 @@ function loadAppearanceSettings() {
         ? savedSettings.textAlign
         : DEFAULT_APPEARANCE.textAlign,
 
-      translationDirection: ['ja-vi', 'vi-ja'].includes(savedSettings.translationDirection)
+      translationDirection: Object.hasOwn(LANGUAGE_DIRECTIONS, savedSettings.translationDirection)
         ? savedSettings.translationDirection
         : DEFAULT_APPEARANCE.translationDirection,
 

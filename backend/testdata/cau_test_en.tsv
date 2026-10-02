@@ -1,0 +1,34 @@
+# Bộ câu test tiếng ANH — đọc từng câu, thu WAV 16kHz mono, đặt tên đúng cột 1,
+# bỏ vào một thư mục rồi chạy:
+#   python eval_terms.py --lang en --target vi --wav-dir <thư_mục_wav> --sentences testdata/cau_test_en.tsv
+# Câu lấy từ cột en của cau_test_mt.tsv (cùng id) để so được với kết quả MT thuần.
+time01.wav	The meeting starts at 3 p.m. tomorrow.
+time02.wav	Let's meet again next Monday at 10 a.m.
+time03.wav	The deadline is the end of this month.
+time04.wav	I will be out of the office from Wednesday to Friday.
+time05.wav	Can we move the review to 4:30 in the afternoon?
+time06.wav	The release is scheduled for October 15.
+num01.wav	The budget for this project is 2 million yen.
+num02.wav	Sales increased by 30 percent compared to last year.
+num03.wav	We need five more engineers for the next phase.
+num04.wav	About 1,500 users reported the problem.
+it01.wav	I fixed the bug and pushed it to the main branch.
+it02.wav	Please create a pull request after you finish the test.
+it03.wav	We will deploy the new version to the staging server tonight.
+it04.wav	The database migration failed, so we rolled back.
+it05.wav	Could you review my code before the merge?
+it06.wav	The API response is too slow, we need to add a cache.
+it07.wav	There is a conflict in this file, please resolve it.
+it08.wav	The test environment is down since this morning.
+req01.wav	Thank you for your hard work today.
+req02.wav	I'm sorry, could you say that again?
+req03.wav	I have sent the document, please take a look.
+req04.wav	Please let me know if you have any questions.
+req05.wav	I'll check it and get back to you later.
+req06.wav	Could you share your screen?
+req07.wav	Sorry, I'm a little late.
+gen01.wav	Let's start today's meeting.
+gen02.wav	The customer was satisfied with the demo.
+gen03.wav	We don't have enough time to finish everything this week.
+gen04.wav	I agree with your opinion.
+gen05.wav	That's all for today, see you next week.

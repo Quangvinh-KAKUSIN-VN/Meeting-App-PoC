@@ -93,6 +93,8 @@ import { useWindowControls } from './composables/useWindowControls'
 
 import { useTranscription } from './composables/useTranscription'
 
+import { LANGUAGE_DIRECTIONS } from './constants/appearance'
+
 import TopBar from './components/TopBar.vue'
 import AppearancePanel from './components/AppearancePanel.vue'
 import ControlStrip from './components/ControlStrip.vue'
@@ -221,7 +223,11 @@ const toggleDirection = () => {
     return
   }
 
-  translationDirection.value = translationDirection.value === 'ja-vi' ? 'vi-ja' : 'ja-vi'
+  // Xoay vòng qua mọi chiều theo thứ tự khai báo trong LANGUAGE_DIRECTIONS
+  const directions = Object.keys(LANGUAGE_DIRECTIONS)
+  const nextIndex = (directions.indexOf(translationDirection.value) + 1) % directions.length
+
+  translationDirection.value = directions[nextIndex]
 }
 
 const toggleWindowLock = () => {

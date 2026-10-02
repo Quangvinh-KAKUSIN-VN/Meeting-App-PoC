@@ -1,0 +1,39 @@
+# Bộ câu test DỊCH MÁY 3 ngôn ngữ — mỗi dòng: id<TAB>en<TAB>ja<TAB>vi (3 bản song song).
+# Một dòng dùng được cho cả 6 chiều: lấy 1 cột làm nguồn, cột kia làm tham chiếu.
+# Chạy:  python eval_mt.py            (xem eval_mt.py --help)
+# Nhóm câu (tiền tố id):
+#   time  giờ giấc / ngày tháng — lỗi sáng/chiều hay gặp nhất
+#   num   số tiền, phần trăm, số lượng
+#   it    thuật ngữ IT có trong glossary.json (branch, deploy, bug...)
+#   req   nhờ vả / kính ngữ / văn nói trong họp
+#   gen   câu họp chung, không thuật ngữ (đối chứng)
+time01	The meeting starts at 3 p.m. tomorrow.	明日の会議は午後3時からです。	Cuộc họp ngày mai bắt đầu lúc 3 giờ chiều.
+time02	Let's meet again next Monday at 10 a.m.	来週の月曜日の午前10時にまた会いましょう。	Hẹn gặp lại vào 10 giờ sáng thứ Hai tuần sau.
+time03	The deadline is the end of this month.	締め切りは今月末です。	Hạn chót là cuối tháng này.
+time04	I will be out of the office from Wednesday to Friday.	水曜日から金曜日まで不在にします。	Tôi sẽ vắng mặt ở văn phòng từ thứ Tư đến thứ Sáu.
+time05	Can we move the review to 4:30 in the afternoon?	レビューを午後4時半に変更できますか。	Mình có thể dời buổi review sang 4 giờ rưỡi chiều được không?
+time06	The release is scheduled for October 15.	リリースは10月15日の予定です。	Bản release dự kiến vào ngày 15 tháng 10.
+num01	The budget for this project is 2 million yen.	このプロジェクトの予算は200万円です。	Ngân sách cho dự án này là 2 triệu yên.
+num02	Sales increased by 30 percent compared to last year.	売上は去年と比べて30%増加しました。	Doanh số tăng 30% so với năm ngoái.
+num03	We need five more engineers for the next phase.	次のフェーズにはエンジニアがあと5人必要です。	Giai đoạn tới mình cần thêm 5 kỹ sư nữa.
+num04	About 1,500 users reported the problem.	約1,500人のユーザーがその問題を報告しました。	Khoảng 1.500 người dùng đã báo cáo vấn đề đó.
+it01	I fixed the bug and pushed it to the main branch.	バグを修正してmainブランチにpushしました。	Tôi đã fix bug và push lên branch main rồi.
+it02	Please create a pull request after you finish the test.	テストが終わったらプルリクエストを作成してください。	Test xong thì tạo pull request nhé.
+it03	We will deploy the new version to the staging server tonight.	今夜、新しいバージョンをステージングサーバーにデプロイします。	Tối nay mình sẽ deploy bản mới lên server staging.
+it04	The database migration failed, so we rolled back.	データベースのマイグレーションが失敗したので、ロールバックしました。	Migration database bị lỗi nên mình đã rollback.
+it05	Could you review my code before the merge?	マージの前に私のコードをレビューしていただけますか。	Anh review code giúp em trước khi merge được không?
+it06	The API response is too slow, we need to add a cache.	APIのレスポンスが遅すぎるので、キャッシュを追加する必要があります。	Response của API chậm quá, mình cần thêm cache.
+it07	There is a conflict in this file, please resolve it.	このファイルでコンフリクトが発生しているので、解消してください。	File này đang bị conflict, bạn resolve giúp nhé.
+it08	The test environment is down since this morning.	テスト環境が今朝から落ちています。	Môi trường test bị sập từ sáng nay.
+req01	Thank you for your hard work today.	今日はお疲れ様でした。	Hôm nay mọi người vất vả rồi.
+req02	I'm sorry, could you say that again?	すみません、もう一度言っていただけますか。	Xin lỗi, anh nói lại lần nữa được không ạ?
+req03	I have sent the document, please take a look.	資料を送ったので、確認してください。	Em gửi tài liệu rồi, anh xem giúp em nhé.
+req04	Please let me know if you have any questions.	何か質問があれば教えてください。	Có câu hỏi gì thì cứ báo em nhé.
+req05	I'll check it and get back to you later.	確認して後ほどご連絡します。	Em kiểm tra rồi báo lại anh sau ạ.
+req06	Could you share your screen?	画面を共有していただけますか。	Anh chia sẻ màn hình được không?
+req07	Sorry, I'm a little late.	すみません、少し遅れました。	Xin lỗi, em đến trễ một chút.
+gen01	Let's start today's meeting.	それでは今日の会議を始めましょう。	Chúng ta bắt đầu cuộc họp hôm nay nhé.
+gen02	The customer was satisfied with the demo.	お客様はデモに満足していました。	Khách hàng hài lòng với buổi demo.
+gen03	We don't have enough time to finish everything this week.	今週中にすべてを終わらせる時間が足りません。	Tuần này không đủ thời gian để làm xong hết.
+gen04	I agree with your opinion.	あなたの意見に賛成です。	Tôi đồng ý với ý kiến của bạn.
+gen05	That's all for today, see you next week.	今日は以上です。また来週。	Hôm nay đến đây thôi, hẹn gặp mọi người tuần sau.

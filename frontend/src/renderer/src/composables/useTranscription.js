@@ -15,7 +15,7 @@ const FALLBACK_BACKEND_PORT = 8765
 const MAX_VISIBLE_LINES = 30
 
 /**
- * translationDirection: ref<'ja-vi' | 'vi-ja'> lấy từ
+ * translationDirection: ref<key của LANGUAGE_DIRECTIONS> lấy từ
  * useAppearanceSettings(), truyền vào để biết nên gọi
  * endpoint nào và ghi chiều dịch vào lịch sử.
  */
@@ -76,22 +76,22 @@ export function useTranscription(translationDirection) {
    * truyền xuống Python qua biến môi trường KATOBA_PORT. Nhờ vậy đổi cổng
    * chỉ phải sửa một chỗ duy nhất.
    */
-  const resolveWebSocketUrl = async (wsPath) => {
+  const resolveWebSocketUrl = async (wsPath, target) => {
+    let host = '127.0.0.1'
+    let port = FALLBACK_BACKEND_PORT
+
     try {
       const endpoint = await window.api?.getBackendEndpoint?.()
 
-      if (endpoint) {
-        const url = wsPath === 'ja' ? endpoint.wsJa : endpoint.wsVi
-
-        if (url) {
-          return url
-        }
+      if (endpoint?.host && endpoint?.port) {
+        host = endpoint.host
+        port = endpoint.port
       }
     } catch (error) {
       console.warn('Không lấy được endpoint từ main process:', error)
     }
 
-    return `ws://127.0.0.1:${FALLBACK_BACKEND_PORT}/ws/audio/${wsPath}`
+    return `ws://${host}:${port}/ws/audio/${wsPath}?target=${encodeURIComponent(target)}`
   }
 
   /**
@@ -280,9 +280,9 @@ export function useTranscription(translationDirection) {
     isStarting.value = true
 
     try {
-      const wsPath = LANGUAGE_DIRECTIONS[translationDirection.value].wsPath
+      const { wsPath, target } = LANGUAGE_DIRECTIONS[translationDirection.value]
 
-      const websocketUrl = await resolveWebSocketUrl(wsPath)
+      const websocketUrl = await resolveWebSocketUrl(wsPath, target)
 
       streamer = new AudioStreamer(websocketUrl, addTranscript)
 

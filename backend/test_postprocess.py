@@ -112,10 +112,49 @@ check("số tiếng Nhật: 千五百円 -> 1,500円",
       normalize_source("千五百円です", "ja"), "1,500円です")
 check("số tiếng Việt: hai trăm nghìn -> 200.000",
       normalize_source("giá hai trăm nghìn đồng", "vi"), "giá 200.000 đồng")
+check("số thập phân VI: một phẩy năm triệu -> 1.500.000",
+      normalize_source("chi phí một phẩy năm triệu yên", "vi"), "chi phí 1.500.000 yên")
+check("số thập phân VI: hai phẩy năm -> 2,5",
+      normalize_source("tăng hai phẩy năm lần", "vi"), "tăng 2,5 lần")
+check("số thập phân VI: không phẩy không năm -> 0,05",
+      normalize_source("sai số không phẩy không năm", "vi"), "sai số 0,05")
+check("'dấu phẩy' KHÔNG bị coi là số thập phân",
+      normalize_source("thiếu dấu phẩy ở đây", "vi"), "thiếu dấu phẩy ở đây")
+check("'tỷ lệ' KHÔNG thành 1.000.000.000",
+      normalize_source("tỷ lệ lỗi giảm rồi", "vi"), "tỷ lệ lỗi giảm rồi")
+check("'hàng nghìn' KHÔNG thành 'hàng 1.000'",
+      normalize_source("hàng nghìn người dùng", "vi"), "hàng nghìn người dùng")
+check("ba tỷ vẫn đổi",
+      normalize_source("khoảng ba tỷ đồng", "vi"), "khoảng 3.000.000.000 đồng")
+check("số VI không có phẩy vẫn như cũ",
+      normalize_source("khoảng ba triệu yên", "vi"), "khoảng 3.000.000 yên")
 check("locale VI: 0.3% -> 0,3%",
       fix_decimal_locale("tăng 0.3%", "vi"), "tăng 0,3%")
 check("locale JA: 200.000 -> 200,000",
       fix_decimal_locale("200.000ドン", "ja"), "200,000ドン")
+check("locale JA: số ĐÃ đúng kiểu 1,500 giữ nguyên",
+      fix_decimal_locale("約1,500人", "ja"), "約1,500人")
+check("locale VI: số ĐÃ đúng kiểu 1.500 giữ nguyên",
+      fix_decimal_locale("khoảng 1.500 người", "vi"), "khoảng 1.500 người")
+check("locale EN: 2.000.000 -> 2,000,000, giữ 1,500",
+      fix_decimal_locale("2.000.000 yen, 1,500 users, 0,3%", "en"),
+      "2,000,000 yen, 1,500 users, 0.3%")
+
+print("--- Tiếng Anh")
+check("tiếng đệm EN: um/uh bị cắt, 'Umbrella' giữ",
+      strip_fillers("Um, I think, uh, we need the Umbrella API.", "en"),
+      "I think, we need the Umbrella API.")
+check("cleanup EN giữ dấu cách sau dấu phẩy",
+      cleanup("Hello ,  world  world  world !", "en"), "Hello, world!")
+check("glossary EN->VI: nhánh -> branch khi nguồn có 'branch'",
+      G.apply("Check the main branch", "Kiểm tra nhánh chính", "en", "vi")[0],
+      "Kiểm tra branch chính")
+check("glossary ->JA: hai thuật ngữ liền nhau không bị dính",
+      G.apply("deploy to the staging server", "ステージングサーバーにデプロイします",
+              "en", "ja")[0],
+      "staging serverにdeployします")
+check("normalize_source EN không đụng 'ba'/'năm'",
+      normalize_source("Ba said five hundred", "en"), "Ba said five hundred")
 check("cắt lặp cụm: Hướng dẫn hướng dẫn -> Hướng dẫn",
       cleanup("Hướng dẫn hướng dẫn sử dụng", "vi"), "Hướng dẫn sử dụng")
 check("láy hợp lệ không bị cắt: xanh xanh",

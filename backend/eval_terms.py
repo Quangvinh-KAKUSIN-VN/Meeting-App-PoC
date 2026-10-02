@@ -155,13 +155,17 @@ def has_canonical(e: dict, text: str, lang: str) -> bool:
 # Chạy
 # ---------------------------------------------------------------------------
 
-def run(lang: str, wav_dir: Path, sentences: Path, out_csv: Path) -> None:
+def run(lang: str, wav_dir: Path, sentences: Path, out_csv: Path,
+        tgt: str | None = None) -> None:
     print("⏳ Nạp model (dùng chung code với main.py, mất ~30-60s)...")
-    import main  # noqa: E402 — nạp 3 model + glossary y hệt app thật
+    import main  # noqa: E402 — nạp model + glossary y hệt app thật
 
-    tgt = "vi" if lang == "ja" else "ja"
-    rec = main.recognizer_ja if lang == "ja" else main.recognizer_vi
-    lock = main.recognizer_ja_lock if lang == "ja" else main.recognizer_vi_lock
+    tgt = tgt or main.DEFAULT_TARGET[lang]
+    if (lang, tgt) not in main.ALLOWED_DIRECTIONS:
+        raise SystemExit(f"Không hỗ trợ chiều {lang}->{tgt}")
+    if lang not in main.RECOGNIZERS:
+        raise SystemExit(f"Backend chưa nạp được ASR cho '{lang}' (thiếu model?)")
+    rec, lock = main.RECOGNIZERS[lang]
 
     rows = []
     for line in sentences.read_text(encoding="utf-8").splitlines():
@@ -187,7 +191,7 @@ def run(lang: str, wav_dir: Path, sentences: Path, out_csv: Path) -> None:
             continue
 
         samples = read_wav_16k_mono(wav)
-        raw = main.recognize(rec, lock, samples)
+        raw, _score, _ms = main.recognize(rec, lock, samples)
 
         post = PostProcessor(main.GLOSSARY, cache=TranslationCache())
         src_fixed = post.prepare_source(raw, lang)
@@ -264,8 +268,11 @@ def run(lang: str, wav_dir: Path, sentences: Path, out_csv: Path) -> None:
 def build_argparser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
         description="Đo chất lượng bắt & dịch thuật ngữ trên bộ câu test")
-    ap.add_argument("--lang", required=True, choices=["ja", "vi"],
+    ap.add_argument("--lang", required=True, choices=["ja", "vi", "en"],
                     help="ngôn ngữ NÓI trong file WAV")
+    ap.add_argument("--target", choices=["ja", "vi", "en"], default=None,
+                    help="ngôn ngữ đích (mặc định: ja->vi, vi->ja, en->vi; "
+                         "không hỗ trợ en<->ja)")
     ap.add_argument("--wav-dir", required=True, type=Path,
                     help="thư mục chứa file WAV đã thu")
     ap.add_argument("--sentences", required=True, type=Path,
@@ -278,4 +285,4 @@ def build_argparser() -> argparse.ArgumentParser:
 if __name__ == "__main__":
     args = build_argparser().parse_args()
     out = args.out or (BASE_DIR / f"eval_{args.lang}.csv")
-    run(args.lang, args.wav_dir, args.sentences, out)
+    run(args.lang, args.wav_dir, args.sentences, out, args.target)
