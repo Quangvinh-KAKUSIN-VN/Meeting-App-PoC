@@ -1,3 +1,5 @@
+import { DEFAULT_UI_LANGUAGE } from '../i18n'
+
 export const SETTINGS_KEY = 'katoba-bridge-ai-ui-v1'
 
 export const DEFAULT_APPEARANCE = {
@@ -8,54 +10,71 @@ export const DEFAULT_APPEARANCE = {
   textAlign: 'center',
   translationDirection: 'ja-vi',
   isFocusMode: false,
-  isLocked: false
+  isLocked: false,
+  uiLanguage: DEFAULT_UI_LANGUAGE
 }
 
+/*
+ * wsPath = ngôn ngữ NÓI (chọn ASR), target = ngôn ngữ đích (?target= gửi
+ * cho backend). Thứ tự khai báo ở đây cũng là thứ tự nút đổi chiều xoay vòng.
+ *
+ * Chữ hiển thị (tên ngôn ngữ, câu gợi ý) nằm trong i18n/vi.js và i18n/en.js:
+ * languages.<wsPath|target> và directions.<key>.
+ */
 export const LANGUAGE_DIRECTIONS = {
   'ja-vi': {
     wsPath: 'ja',
+    target: 'vi',
     sourceCode: 'JA',
-    targetCode: 'VI',
-    sourceName: 'Japanese',
-    targetName: 'Vietnamese',
-    listeningLabel: 'Đang lắng nghe tiếng Nhật',
-    hintText: 'Chọn nguồn âm thanh rồi bắt đầu phiên dịch Nhật → Việt.'
+    targetCode: 'VI'
   },
 
   'vi-ja': {
     wsPath: 'vi',
+    target: 'ja',
     sourceCode: 'VI',
-    targetCode: 'JA',
-    sourceName: 'Vietnamese',
-    targetName: 'Japanese',
-    listeningLabel: 'Đang lắng nghe tiếng Việt',
-    hintText: 'Chọn nguồn âm thanh rồi bắt đầu phiên dịch Việt → Nhật.'
+    targetCode: 'JA'
+  },
+
+  'en-vi': {
+    wsPath: 'en',
+    target: 'vi',
+    sourceCode: 'EN',
+    targetCode: 'VI'
+  },
+
+  'vi-en': {
+    wsPath: 'vi',
+    target: 'en',
+    sourceCode: 'VI',
+    targetCode: 'EN'
   }
 }
 
+// key dùng để tra tên màu: colors.<key> trong i18n
 export const colorPresets = [
   {
-    label: 'Trắng',
+    key: 'white',
     value: '#FFFFFF'
   },
   {
-    label: 'Vàng ấm',
+    key: 'warmYellow',
     value: '#FFE082'
   },
   {
-    label: 'Xanh cyan',
+    key: 'cyan',
     value: '#67E8F9'
   },
   {
-    label: 'Xanh lá',
+    key: 'green',
     value: '#86EFAC'
   },
   {
-    label: 'Cam',
+    key: 'orange',
     value: '#FDBA74'
   },
   {
-    label: 'Hồng',
+    key: 'pink',
     value: '#F9A8D4'
   }
 ]

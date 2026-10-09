@@ -4,6 +4,8 @@ import { AudioStreamer } from '../audioStreamer'
 
 import { LANGUAGE_DIRECTIONS } from '../constants/appearance'
 
+import { t } from '../i18n'
+
 /*
  * Chỉ dùng khi IPC 'backend:get-endpoint' không khả dụng
  * (chạy renderer ngoài Electron, hoặc preload chưa expose).
@@ -15,7 +17,7 @@ const FALLBACK_BACKEND_PORT = 8765
 const MAX_VISIBLE_LINES = 30
 
 /**
- * translationDirection: ref<'ja-vi' | 'vi-ja'> lấy từ
+ * translationDirection: ref<key của LANGUAGE_DIRECTIONS> lấy từ
  * useAppearanceSettings(), truyền vào để biết nên gọi
  * endpoint nào và ghi chiều dịch vào lịch sử.
  */
@@ -76,22 +78,22 @@ export function useTranscription(translationDirection) {
    * truyền xuống Python qua biến môi trường KATOBA_PORT. Nhờ vậy đổi cổng
    * chỉ phải sửa một chỗ duy nhất.
    */
-  const resolveWebSocketUrl = async (wsPath) => {
+  const resolveWebSocketUrl = async (wsPath, target) => {
+    let host = '127.0.0.1'
+    let port = FALLBACK_BACKEND_PORT
+
     try {
       const endpoint = await window.api?.getBackendEndpoint?.()
 
-      if (endpoint) {
-        const url = wsPath === 'ja' ? endpoint.wsJa : endpoint.wsVi
-
-        if (url) {
-          return url
-        }
+      if (endpoint?.host && endpoint?.port) {
+        host = endpoint.host
+        port = endpoint.port
       }
     } catch (error) {
       console.warn('Không lấy được endpoint từ main process:', error)
     }
 
-    return `ws://127.0.0.1:${FALLBACK_BACKEND_PORT}/ws/audio/${wsPath}`
+    return `ws://${host}:${port}/ws/audio/${wsPath}?target=${encodeURIComponent(target)}`
   }
 
   /**
@@ -280,9 +282,9 @@ export function useTranscription(translationDirection) {
     isStarting.value = true
 
     try {
-      const wsPath = LANGUAGE_DIRECTIONS[translationDirection.value].wsPath
+      const { wsPath, target } = LANGUAGE_DIRECTIONS[translationDirection.value]
 
-      const websocketUrl = await resolveWebSocketUrl(wsPath)
+      const websocketUrl = await resolveWebSocketUrl(wsPath, target)
 
       streamer = new AudioStreamer(websocketUrl, addTranscript)
 
@@ -303,9 +305,15 @@ export function useTranscription(translationDirection) {
       streamer = null
       isRecording.value = false
 
-      const sourceLabel = audioSource.value === 'microphone' ? 'microphone' : 'âm thanh máy tính'
+      const sourceLabel =
+        audioSource.value === 'microphone' ? t('errors.sourceMicrophone') : t('errors.sourceSystem')
 
-      addErrorMessage(`Không thể mở ${sourceLabel}: ${error?.message || 'Lỗi không xác định'}`)
+      addErrorMessage(
+        t('errors.openSourceFailed', {
+          source: sourceLabel,
+          reason: error?.message || t('errors.unknown')
+        })
+      )
     } finally {
       isStarting.value = false
     }
@@ -370,9 +378,7 @@ export function useTranscription(translationDirection) {
         await stopRecording()
       }
 
-      addErrorMessage(
-        `Backend đã dừng hoạt động (code=${code}). Vui lòng khởi động lại ứng dụng.`
-      )
+      addErrorMessage(t('errors.backendDown', { code }))
     })
   }
 
@@ -408,9 +414,9 @@ export function useTranscription(translationDirection) {
     const now = new Date()
 
     const lines = [
-      'BIÊN BẢN PHIÊN DỊCH CUỘC HỌP',
-      `Xuất lúc: ${formatExportTimestamp(now)}`,
-      `Số câu đã dịch: ${sessionHistory.value.length}`,
+      t('export.title'),
+      t('export.exportedAt', { time: formatExportTimestamp(now) }),
+      t('export.sentenceCount', { count: sessionHistory.value.length }),
       '',
       '='.repeat(50),
       ''
@@ -448,7 +454,7 @@ export function useTranscription(translationDirection) {
     const pad = (value) => String(value).padStart(2, '0')
 
     const fileName =
-      `bien-ban-hop-${now.getFullYear()}` +
+      `${t('export.fileNamePrefix')}-${now.getFullYear()}` +
       `${pad(now.getMonth() + 1)}` +
       `${pad(now.getDate())}-` +
       `${pad(now.getHours())}` +

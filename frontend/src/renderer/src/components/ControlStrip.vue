@@ -24,9 +24,9 @@
         </span>
 
         <span class="source-copy">
-          <strong> Âm thanh máy tính </strong>
+          <strong>{{ t('controls.systemAudio') }}</strong>
 
-          <small> Zoom, Meet, YouTube </small>
+          <small>{{ t('controls.systemAudioHint') }}</small>
         </span>
 
         <span class="source-check"></span>
@@ -55,9 +55,9 @@
         </span>
 
         <span class="source-copy">
-          <strong>Microphone</strong>
+          <strong>{{ t('controls.microphone') }}</strong>
 
-          <small> Người nói hoặc loa ngoài </small>
+          <small>{{ t('controls.microphoneHint') }}</small>
         </span>
 
         <span class="source-check"></span>
@@ -84,12 +84,14 @@
     >
       <span class="action-icon stop-icon" aria-hidden="true"></span>
 
-      <span>Dừng phiên dịch</span>
+      <span>{{ t('controls.stop') }}</span>
     </button>
   </div>
 </template>
 
 <script setup>
+import { t } from '../i18n'
+
 defineProps({
   audioSource: {
     type: String,

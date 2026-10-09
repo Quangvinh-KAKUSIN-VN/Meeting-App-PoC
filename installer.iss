@@ -7,8 +7,9 @@
 #define MyAppPublisher "KaTOBA"
 #define MyAppExeName "KaTOBA.exe"
 
-; Thư mục chứa app đã build (win-unpacked). Sửa nếu đặt project chỗ khác.
-#define SourceDir "C:\Users\NguyenQuangVinh\Meeting-App-PoC\frontend\dist\win-unpacked"
+; Thư mục chứa app đã build (win-unpacked), tính theo vị trí file .iss này —
+; máy nào clone project về cũng build được, không phải sửa đường dẫn.
+#define SourceDir AddBackslash(SourcePath) + "frontend\dist\win-unpacked"
 
 [Setup]
 AppId={{2F7A91C4-6B3D-4E18-A5F2-KATOBAAPP001}

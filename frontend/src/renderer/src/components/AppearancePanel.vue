@@ -2,14 +2,14 @@
   <aside class="appearance-panel" @mousedown.stop>
     <div class="appearance-header">
       <div>
-        <strong>Hiển thị phụ đề</strong>
-        <span>Tùy chỉnh và tự động lưu</span>
+        <strong>{{ t('appearance.title') }}</strong>
+        <span>{{ t('appearance.subtitle') }}</span>
       </div>
 
       <button
         class="panel-close"
         type="button"
-        aria-label="Đóng bảng tùy chỉnh"
+        :aria-label="t('appearance.close')"
         @click="$emit('close')"
       >
         ×
@@ -17,8 +17,27 @@
     </div>
 
     <div class="setting-group">
+      <span class="setting-label">{{ t('appearance.uiLanguage') }}</span>
+
+      <div class="segment-control language-control">
+        <button
+          v-for="language in UI_LANGUAGES"
+          :key="language.value"
+          type="button"
+          :lang="language.value"
+          :class="{
+            active: uiLanguage === language.value
+          }"
+          @click="$emit('update:uiLanguage', language.value)"
+        >
+          {{ language.label }}
+        </button>
+      </div>
+    </div>
+
+    <div class="setting-group">
       <div class="setting-label">
-        <span>Màu chữ</span>
+        <span>{{ t('appearance.textColor') }}</span>
 
         <code>{{ subtitleColor }}</code>
       </div>
@@ -32,15 +51,15 @@
             selected: subtitleColor.toLowerCase() === preset.value.toLowerCase()
           }"
           type="button"
-          :title="preset.label"
-          :aria-label="preset.label"
+          :title="t(`colors.${preset.key}`)"
+          :aria-label="t(`colors.${preset.key}`)"
           :style="{
             backgroundColor: preset.value
           }"
           @click="$emit('update:subtitleColor', preset.value)"
         ></button>
 
-        <label class="custom-color" title="Chọn màu khác">
+        <label class="custom-color" :title="t('appearance.customColor')">
           <input
             :value="subtitleColor"
             type="color"
@@ -54,7 +73,7 @@
 
     <div class="setting-group">
       <div class="setting-label">
-        <span>Cỡ chữ</span>
+        <span>{{ t('appearance.fontSize') }}</span>
 
         <strong>{{ fontSize }} px</strong>
       </div>
@@ -72,7 +91,7 @@
 
     <div class="setting-group">
       <div class="setting-label">
-        <span>Độ trong suốt nền</span>
+        <span>{{ t('appearance.opacity') }}</span>
 
         <strong> {{ Math.round(panelOpacity * 100) }}% </strong>
       </div>
@@ -90,7 +109,7 @@
 
     <div class="setting-group">
       <div class="setting-label">
-        <span>Viền chữ</span>
+        <span>{{ t('appearance.outline') }}</span>
 
         <strong>{{ outlineStrength }}</strong>
       </div>
@@ -107,7 +126,7 @@
     </div>
 
     <div class="setting-group">
-      <span class="setting-label"> Căn chỉnh phụ đề </span>
+      <span class="setting-label">{{ t('appearance.align') }}</span>
 
       <div class="segment-control">
         <button
@@ -117,7 +136,7 @@
           }"
           @click="$emit('update:textAlign', 'left')"
         >
-          Trái
+          {{ t('appearance.alignLeft') }}
         </button>
 
         <button
@@ -127,7 +146,7 @@
           }"
           @click="$emit('update:textAlign', 'center')"
         >
-          Giữa
+          {{ t('appearance.alignCenter') }}
         </button>
 
         <button
@@ -137,15 +156,15 @@
           }"
           @click="$emit('update:textAlign', 'right')"
         >
-          Phải
+          {{ t('appearance.alignRight') }}
         </button>
       </div>
     </div>
 
     <label class="switch-row">
       <span>
-        <strong>Luôn nổi trên cùng</strong>
-        <small> Giữ phụ đề phía trên Zoom hoặc Meet </small>
+        <strong>{{ t('appearance.alwaysOnTop') }}</strong>
+        <small>{{ t('appearance.alwaysOnTopHint') }}</small>
       </span>
 
       <input
@@ -158,7 +177,7 @@
     </label>
 
     <button class="reset-appearance" type="button" @click="$emit('reset-appearance')">
-      Khôi phục giao diện mặc định
+      {{ t('appearance.reset') }}
     </button>
   </aside>
 </template>
@@ -166,7 +185,13 @@
 <script setup>
 import { colorPresets } from '../constants/appearance'
 
+import { t, UI_LANGUAGES } from '../i18n'
+
 defineProps({
+  uiLanguage: {
+    type: String,
+    required: true
+  },
   subtitleColor: {
     type: String,
     required: true
@@ -195,6 +220,7 @@ defineProps({
 
 defineEmits([
   'close',
+  'update:uiLanguage',
   'update:subtitleColor',
   'update:fontSize',
   'update:panelOpacity',
@@ -424,6 +450,10 @@ defineEmits([
 .segment-control button.active {
   color: #ffffff;
   background: rgba(212, 212, 216, 0.18);
+}
+
+.language-control {
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .switch-row {

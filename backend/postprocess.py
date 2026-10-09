@@ -170,9 +170,51 @@ def _vi_words_to_int(words: list[str]) -> int:
     return total + _vi_block(block)
 
 
+def _vi_decimal(grp: list[str], tokens: list[str], j: int) -> tuple[str, int] | None:
+    """'một phẩy năm triệu' -> ('1.500.000', vị trí token kế tiếp); 'hai phẩy năm' -> '2,5'.
+
+    Không xử lý thì cụm trước "phẩy" (< 100) bị để nguyên còn cụm sau bị đổi
+    riêng: 'một phẩy năm triệu' -> 'một phẩy 5.000.000' -> model dịch thành 5 triệu.
+    """
+    if not grp or any(w in _VI_SCALE for w in grp) or j >= len(tokens):
+        return None
+    if re.sub(r"[^\w]", "", tokens[j]).lower() != "phẩy":
+        return None
+    frac, k, scale = [], j + 1, None
+    while k < len(tokens):
+        w = re.sub(r"[^\w]", "", tokens[k]).lower()
+        if w in _VI_SCALE:
+            scale = w
+            k += 1
+            break
+        if w not in _VI_DIGIT and w not in ("mươi", "mười", "trăm"):
+            break
+        frac.append(w)
+        k += 1
+    if not frac:
+        return None
+    # "hai lăm" đọc từng chữ số -> "25"; "hai mươi lăm" đọc như số -> cũng "25"
+    if all(w in _VI_DIGIT for w in frac):
+        frac_s = "".join(str(_VI_DIGIT[w]) for w in frac)
+    else:
+        frac_s = str(_vi_block(frac))
+    whole = _vi_block(grp)
+    if scale:
+        mul = _VI_SCALE[scale]
+        if 10 ** len(frac_s) <= mul:          # 1,5 triệu -> số nguyên 1.500.000
+            return _fmt_vi(whole * mul + int(frac_s) * mul // 10 ** len(frac_s)), k
+        return f"{whole},{frac_s} {scale}", k
+    return f"{whole},{frac_s}", k
+
+
 def normalize_source(text: str, lang: str) -> str:
     """"""
     if not text:
+        return text
+
+    # Parakeet-EN tự xuất chữ số, và các từ số tiếng Việt ("ba", "năm"...)
+    # không có nghĩa số trong câu tiếng Anh -> không chuẩn hoá gì cả.
+    if lang == "en":
         return text
 
     if lang == "ja":
@@ -210,7 +252,15 @@ def normalize_source(text: str, lang: str) -> str:
             while grp and grp[-1] in _VI_SKIP:
                 grp.pop()
                 j -= 1
-            n = _vi_words_to_int(grp) if grp else 0
+            dec = _vi_decimal(grp, tokens, j)
+            if dec:
+                out.append(dec[0])
+                i = dec[1]
+                continue
+            # Cụm không có chữ số nào ("tỷ lệ", "tỷ giá", "hàng nghìn") không phải số:
+            # _vi_words_to_int tự thêm 1 -> "tỷ lệ lỗi" thành "1.000.000.000 lệ lỗi".
+            has_digit = any(w in _VI_DIGIT or w == "mười" for w in grp)
+            n = _vi_words_to_int(grp) if grp and has_digit else 0
             if grp and n >= 100:
                 out.append(_fmt_vi(n))
                 i = j
@@ -230,13 +280,18 @@ _JA_THOUS = re.compile(r"(?<=\d),(?=\d{3}(?!\d))")
 
 
 def fix_decimal_locale(text: str, tgt_lang: str) -> str:
-    """VI dùng ',' làm thập phân và '.' làm phân cách nghìn. JA thì ngược lại."""
+    """VI dùng ',' làm thập phân và '.' làm phân cách nghìn. JA và EN thì ngược lại."""
     if not text:
         return text
-    if tgt_lang == "ja":
+    # Model nhiều khi ĐÃ viết số đúng kiểu đích ("1,500人", "1.500 người").
+    # Phải khoá dạng đúng đó lại trước, nếu không bước đổi thập phân bên dưới
+    # sẽ lật nó thành sai ("1,500" -> "1.500").
+    if tgt_lang in ("ja", "en"):
+        text = _JA_THOUS.sub("\x00", text)   # 1,500   -> giữ nguyên
         text = _VI_THOUS.sub("\x00", text)   # 200.000 -> tạm
         text = _VI_DEC.sub(".", text)        # 0,3     -> 0.3
         return text.replace("\x00", ",")     # -> 200,000
+    text = _VI_THOUS.sub("\x00", text)       # 1.500   -> giữ nguyên
     text = _JA_THOUS.sub("\x00", text)
     text = _JA_DEC.sub(",", text)
     return text.replace("\x00", ".")
@@ -261,9 +316,12 @@ def _compile_pattern(text: str, side: str) -> re.Pattern:
         flags = 0 if _is_acronym(text) else re.IGNORECASE
         return re.compile(
             rf"(?<![A-Za-z0-9]){re.escape(text)}(?![A-Za-z0-9])", flags)
-    if side == "vi":
+    if side in ("vi", "en"):
         return re.compile(rf"(?<!\w){re.escape(text)}(?!\w)", re.IGNORECASE)
     return re.compile(re.escape(text))
+
+
+LANGS = ("ja", "vi", "en")
 
 
 _PLACEHOLDER = re.compile("\x02(\\d+)\x02")
@@ -295,7 +353,8 @@ def _protected_replace(text: str,
             if any(bs <= s and e <= be for bs, be in blocked):
                 return m.group(0)
             replaced += 1
-            slots.append(canonical)       # thay bằng bản chuẩn
+            # \x03 đánh dấu biên của bản chuẩn vừa chèn — xem _fix_gaps().
+            slots.append(f"\x03{canonical}\x03")
             return f"\x02{len(slots) - 1}\x02"
         return _swap
 
@@ -305,7 +364,26 @@ def _protected_replace(text: str,
         text = pat.sub(_swap_factory(canonical, blocked), text)
 
     text = _PLACEHOLDER.sub(lambda m: slots[int(m.group(1))], text)
-    return text, replaced
+    return _fix_gaps(text), replaced
+
+
+_BOUNDARY = re.compile("\x03+")
+
+
+def _fix_gaps(text: str) -> str:
+    """
+    Câu tiếng Nhật không có dấu cách, nên khi ステージングサーバー được đổi
+    thành staging + server thì hai từ Latin dính liền ("stagingserver").
+    Tại biên của từ vừa chèn: hai bên đều là chữ/số Latin -> thêm một dấu
+    cách, còn lại thì bỏ dấu biên.
+    """
+    def _gap(m: re.Match) -> str:
+        s = m.string
+        before = s[m.start() - 1] if m.start() > 0 else ""
+        after = s[m.end()] if m.end() < len(s) else ""
+        return " " if before.isascii() and before.isalnum() \
+            and after.isascii() and after.isalnum() else ""
+    return _BOUNDARY.sub(_gap, text)
 
 
 class Glossary:
@@ -324,47 +402,34 @@ class Glossary:
     @staticmethod
     def _normalize_entry(e: dict) -> dict | None:
         term = (e.get("term") or "").strip()
-
-        ja_hears = [v.strip() for v in e.get("ja_hears", []) if v and v.strip()]
-        vi_hears = [v.strip() for v in e.get("vi_hears", []) if v and v.strip()]
-        ja_bad = [v.strip() for v in e.get("ja_bad", []) if v and v.strip()]
-        vi_bad = [v.strip() for v in e.get("vi_bad", []) if v and v.strip()]
-
         if not term:
             return None
 
+        clean = lambda key: [v.strip() for v in e.get(key, []) if v and v.strip()]
         dedup = lambda xs: list(dict.fromkeys(x for x in xs if x and x != term))
-        return {
-            "term": term,
-            "ja_hears": dedup(ja_hears),
-            "vi_hears": dedup(vi_hears),
-            "ja_bad": dedup(ja_bad),
-            "vi_bad": dedup(vi_bad),
-            "ja_guard": [v.strip() for v in e.get("ja_guard", []) if v and v.strip()],
-            "vi_guard": [v.strip() for v in e.get("vi_guard", []) if v and v.strip()],
-        }
+
+        # Mục chưa khai en_* thì các danh sách tiếng Anh rỗng — thuật ngữ chuẩn
+        # vốn đã là tiếng Anh nên vẫn khớp được qua _term_pat["en"].
+        out = {"term": term}
+        for lang in LANGS:
+            out[f"{lang}_hears"] = dedup(clean(f"{lang}_hears"))
+            out[f"{lang}_bad"] = dedup(clean(f"{lang}_bad"))
+            out[f"{lang}_guard"] = clean(f"{lang}_guard")
+        return out
 
     def _compile(self) -> None:
         """"""
         for e in self.entries:
-            term_len = len(e["term"])
-            e["_term_pat"] = {
-                "ja": _compile_pattern(e["term"], "ja"),
-                "vi": _compile_pattern(e["term"], "vi"),
-            }
-            e["_term_len"] = term_len
-            e["_hears_pat"] = {
-                "ja": [(_compile_pattern(h, "ja"), len(h)) for h in e["ja_hears"]],
-                "vi": [(_compile_pattern(h, "vi"), len(h)) for h in e["vi_hears"]],
-            }
-            e["_bad_pat"] = {
-                "ja": [(_compile_pattern(b, "ja"), len(b)) for b in e["ja_bad"]],
-                "vi": [(_compile_pattern(b, "vi"), len(b)) for b in e["vi_bad"]],
-            }
-            e["_guard_pat"] = {
-                "ja": [(_compile_pattern(g, "ja"), len(g)) for g in e["ja_guard"]],
-                "vi": [(_compile_pattern(g, "vi"), len(g)) for g in e["vi_guard"]],
-            }
+            e["_term_len"] = len(e["term"])
+            e["_term_pat"] = {lang: _compile_pattern(e["term"], lang) for lang in LANGS}
+            e["_hears_pat"], e["_bad_pat"], e["_guard_pat"] = {}, {}, {}
+            for lang in LANGS:
+                e["_hears_pat"][lang] = [(_compile_pattern(h, lang), len(h))
+                                         for h in e[f"{lang}_hears"]]
+                e["_bad_pat"][lang] = [(_compile_pattern(b, lang), len(b))
+                                       for b in e[f"{lang}_bad"]]
+                e["_guard_pat"][lang] = [(_compile_pattern(g, lang), len(g))
+                                         for g in e[f"{lang}_guard"]]
 
     @classmethod
     def load(cls, path: Path, people_path: Path | None = None) -> "Glossary":
@@ -527,6 +592,7 @@ def people_to_entries(people: list[dict]) -> list[dict]:
 
         ja_forms = [v.strip() for v in p.get("ja", []) if v and v.strip()]
         vi_forms = [v.strip() for v in p.get("vi", []) if v and v.strip()]
+        en_forms = [v.strip() for v in p.get("en", []) if v and v.strip()]
         bad = [v.strip() for v in p.get("bad", []) if v and v.strip()]
         guard = [v.strip() for v in p.get("guard", []) if v and v.strip()]
 
@@ -536,22 +602,28 @@ def people_to_entries(people: list[dict]) -> list[dict]:
                 "term": latin + "-san",
                 "ja_hears": with_hon_ja,
                 "vi_hears": [v + " san" for v in vi_forms],
+                "en_hears": [v + " san" for v in en_forms],
                 "ja_guard": guard,
                 "vi_guard": guard,
+                "en_guard": guard,
                 "vi_bad": bad,
                 "ja_bad": bad,
+                "en_bad": bad,
             })
 
         safe_ja = [f for f in ja_forms if len(f) >= 2]
-        if safe_ja or vi_forms:
+        if safe_ja or vi_forms or en_forms:
             entries.append({
                 "term": latin,
                 "ja_hears": safe_ja,
                 "vi_hears": vi_forms,
+                "en_hears": en_forms,
                 "ja_guard": guard,
                 "vi_guard": guard,
+                "en_guard": guard,
                 "vi_bad": bad,
                 "ja_bad": bad,
+                "en_bad": bad,
             })
 
     return entries
@@ -585,13 +657,25 @@ _VI_FILLER_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Chỉ âm đệm thuần. "like", "you know", "so" là từ thật trong nhiều câu,
+# cắt đi thì đổi nghĩa -> không đưa vào.
+_EN_FILLER_RE = re.compile(
+    r"(?:^|(?<=[\s,]))(?:u+[hm]+|e+r+m*|hm+|mm+|ah+)(?=[\s,.!?]|$)[\s,]*",
+    re.IGNORECASE,
+)
+
 
 def strip_fillers(text: str, lang: str) -> str:
     """"""
     if not text:
         return text
 
-    out = _JA_FILLER_RE.sub("", text) if lang == "ja" else _VI_FILLER_RE.sub(" ", text)
+    if lang == "ja":
+        out = _JA_FILLER_RE.sub("", text)
+    elif lang == "en":
+        out = _EN_FILLER_RE.sub(" ", text)
+    else:
+        out = _VI_FILLER_RE.sub(" ", text)
     out = re.sub(r"\s+", " ", out).strip(" ,、")
     return out
 
@@ -686,7 +770,7 @@ def cleanup(text: str, lang: str) -> str:
     if not text:
         return text
     text = unicodedata.normalize("NFKC", text).strip()
-    if lang == "vi":
+    if lang in ("vi", "en"):
         text = _REPEAT_WORD.sub(r"\1", text)
         text = _REPEAT_PHRASE.sub(r"\1", text)
         text = re.sub(r"\s+", " ", text)
@@ -752,6 +836,6 @@ class PostProcessor:
         dst, hits = self.glossary.apply(src, dst, src_lang, tgt_lang)
         self.stats["glossary"] += hits
         dst = fix_decimal_locale(dst, tgt_lang)
-        if tgt_lang == "vi":
+        if tgt_lang in ("vi", "en"):
             dst = _cap_first(dst)
         return dst

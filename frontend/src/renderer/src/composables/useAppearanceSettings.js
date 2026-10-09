@@ -2,6 +2,8 @@ import { computed, ref, watch } from 'vue'
 
 import { SETTINGS_KEY, DEFAULT_APPEARANCE, LANGUAGE_DIRECTIONS } from '../constants/appearance'
 
+import { isUiLanguage, t, uiLanguage } from '../i18n'
+
 function clampNumber(value, minimum, maximum, fallback) {
   const parsedValue = Number(value)
 
@@ -50,13 +52,17 @@ function loadAppearanceSettings() {
         ? savedSettings.textAlign
         : DEFAULT_APPEARANCE.textAlign,
 
-      translationDirection: ['ja-vi', 'vi-ja'].includes(savedSettings.translationDirection)
+      translationDirection: Object.hasOwn(LANGUAGE_DIRECTIONS, savedSettings.translationDirection)
         ? savedSettings.translationDirection
         : DEFAULT_APPEARANCE.translationDirection,
 
       isFocusMode: Boolean(savedSettings.isFocusMode),
 
-      isLocked: Boolean(savedSettings.isLocked)
+      isLocked: Boolean(savedSettings.isLocked),
+
+      uiLanguage: isUiLanguage(savedSettings.uiLanguage)
+        ? savedSettings.uiLanguage
+        : DEFAULT_APPEARANCE.uiLanguage
     }
   } catch (error) {
     console.warn('Không thể đọc thiết lập giao diện:', error)
@@ -86,8 +92,22 @@ export function useAppearanceSettings() {
 
   const isLocked = ref(savedAppearance.isLocked)
 
+  /*
+   * Ref dùng chung của i18n chứ không tạo ref riêng, để t() ở mọi
+   * component đổi theo ngay khi người dùng chọn ngôn ngữ khác.
+   */
+  uiLanguage.value = savedAppearance.uiLanguage
+
   const directionInfo = computed(() => {
-    return LANGUAGE_DIRECTIONS[translationDirection.value]
+    const direction = LANGUAGE_DIRECTIONS[translationDirection.value]
+
+    return {
+      ...direction,
+      sourceName: t(`languages.${direction.wsPath}`),
+      targetName: t(`languages.${direction.target}`),
+      listeningLabel: t(`directions.${translationDirection.value}.listening`),
+      hintText: t(`directions.${translationDirection.value}.hint`)
+    }
   })
 
   const appearanceVariables = computed(() => {
@@ -133,7 +153,9 @@ export function useAppearanceSettings() {
 
           isFocusMode: isFocusMode.value,
 
-          isLocked: isLocked.value
+          isLocked: isLocked.value,
+
+          uiLanguage: uiLanguage.value
         })
       )
     } catch (error) {
@@ -150,7 +172,8 @@ export function useAppearanceSettings() {
       textAlign,
       translationDirection,
       isFocusMode,
-      isLocked
+      isLocked,
+      uiLanguage
     ],
     saveAppearanceSettings
   )
@@ -176,6 +199,7 @@ export function useAppearanceSettings() {
     translationDirection,
     isFocusMode,
     isLocked,
+    uiLanguage,
     directionInfo,
     appearanceVariables,
     resetAppearance

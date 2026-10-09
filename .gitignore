@@ -23,6 +23,7 @@ backend/*.log
 # ============================================================
 backend/models/
 backend/sense-voice/
+old_models/
 *.onnx
 *.bin
 *.tar.bz2
