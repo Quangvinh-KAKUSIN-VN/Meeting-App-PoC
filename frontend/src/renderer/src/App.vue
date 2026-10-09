@@ -38,6 +38,7 @@
       <Transition name="panel-fade">
         <AppearancePanel
           v-if="showAppearancePanel"
+          v-model:ui-language="uiLanguage"
           v-model:subtitle-color="subtitleColor"
           v-model:font-size="fontSize"
           v-model:panel-opacity="panelOpacity"
@@ -95,6 +96,8 @@ import { useTranscription } from './composables/useTranscription'
 
 import { LANGUAGE_DIRECTIONS } from './constants/appearance'
 
+import { t } from './i18n'
+
 import TopBar from './components/TopBar.vue'
 import AppearancePanel from './components/AppearancePanel.vue'
 import ControlStrip from './components/ControlStrip.vue'
@@ -111,6 +114,7 @@ const {
   translationDirection,
   isFocusMode,
   isLocked,
+  uiLanguage,
   directionInfo,
   appearanceVariables,
   resetAppearance
@@ -151,14 +155,14 @@ const showAppearancePanel = ref(false)
 
 const statusLabel = computed(() => {
   if (isStarting.value) {
-    return 'Đang kết nối'
+    return t('status.starting')
   }
 
   if (isRecording.value) {
-    return 'Đang dịch'
+    return t('status.recording')
   }
 
-  return 'Sẵn sàng'
+  return t('status.ready')
 })
 
 const statusClass = computed(() => {
@@ -174,32 +178,32 @@ const statusClass = computed(() => {
 })
 
 const selectedSourceLabel = computed(() => {
-  return audioSource.value === 'microphone' ? 'Microphone' : 'Âm thanh máy tính'
+  return audioSource.value === 'microphone' ? t('controls.microphone') : t('controls.systemAudio')
 })
 
 const startButtonText = computed(() => {
   if (isStarting.value) {
-    return 'Đang khởi động...'
+    return t('controls.starting')
   }
 
-  return 'Bắt đầu phiên dịch'
+  return t('controls.start')
 })
 
 const placeholderTitle = computed(() => {
   if (isStarting.value) {
-    return 'Đang kết nối với AI'
+    return t('placeholder.connectingTitle')
   }
 
   if (isRecording.value) {
     return directionInfo.value.listeningLabel
   }
 
-  return 'Phụ đề sẽ xuất hiện tại đây'
+  return t('placeholder.idleTitle')
 })
 
 const placeholderText = computed(() => {
   if (isStarting.value) {
-    return 'Đang chuẩn bị nguồn âm thanh và kết nối backend.'
+    return t('placeholder.connectingText')
   }
 
   if (!isRecording.value) {
@@ -207,10 +211,10 @@ const placeholderText = computed(() => {
   }
 
   if (audioSource.value === 'microphone') {
-    return 'Hãy để microphone gần người nói hoặc loa ngoài.'
+    return t('placeholder.microphoneText')
   }
 
-  return `Đang nghe âm thanh máy tính trên ${platformLabel.value}.`
+  return t('placeholder.systemText', { platform: platformLabel.value })
 })
 
 const toggleFocusMode = () => {

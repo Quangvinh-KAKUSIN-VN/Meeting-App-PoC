@@ -34,9 +34,12 @@
       class="direction-switch"
       type="button"
       :disabled="isRecording || isStarting"
-      :title="isRecording || isStarting ? 'Dừng phiên dịch để đổi chiều' : 'Đổi chiều dịch'"
+      :title="isRecording || isStarting ? t('topBar.directionLocked') : t('topBar.switchDirection')"
       :aria-label="
-        'Đổi chiều dịch, hiện tại ' + directionInfo.sourceCode + ' sang ' + directionInfo.targetCode
+        t('topBar.switchDirectionAria', {
+          source: directionInfo.sourceCode,
+          target: directionInfo.targetCode
+        })
       "
       @click="$emit('toggle-direction')"
     >
@@ -60,8 +63,8 @@
           active: isFocusMode
         }"
         type="button"
-        :title="isFocusMode ? 'Hiện bảng điều khiển' : 'Chỉ hiển thị phụ đề'"
-        :aria-label="isFocusMode ? 'Hiện bảng điều khiển' : 'Chỉ hiển thị phụ đề'"
+        :title="isFocusMode ? t('topBar.showControls') : t('topBar.focusMode')"
+        :aria-label="isFocusMode ? t('topBar.showControls') : t('topBar.focusMode')"
         @click="$emit('toggle-focus-mode')"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -77,8 +80,8 @@
           active: isLocked
         }"
         type="button"
-        :title="isLocked ? 'Mở khóa cửa sổ' : 'Khóa vị trí và kích thước'"
-        :aria-label="isLocked ? 'Mở khóa cửa sổ' : 'Khóa vị trí và kích thước'"
+        :title="isLocked ? t('topBar.unlockWindow') : t('topBar.lockWindow')"
+        :aria-label="isLocked ? t('topBar.unlockWindow') : t('topBar.lockWindow')"
         @click="$emit('toggle-window-lock')"
       >
         <svg v-if="isLocked" viewBox="0 0 24 24" aria-hidden="true">
@@ -100,8 +103,8 @@
           active: showAppearancePanel
         }"
         type="button"
-        title="Tùy chỉnh giao diện"
-        aria-label="Tùy chỉnh giao diện"
+        :title="t('topBar.appearance')"
+        :aria-label="t('topBar.appearance')"
         @click="$emit('toggle-appearance-panel')"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -119,8 +122,8 @@
         class="tool-button"
         type="button"
         :disabled="!hasHistory"
-        :title="hasHistory ? 'Xuất file lịch sử cuộc họp' : 'Chưa có nội dung để xuất'"
-        :aria-label="'Xuất file lịch sử cuộc họp'"
+        :title="hasHistory ? t('topBar.exportHistory') : t('topBar.nothingToExport')"
+        :aria-label="t('topBar.exportHistory')"
         @click="$emit('export-history')"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -131,8 +134,8 @@
       <button
         class="tool-button clear-button"
         type="button"
-        title="Xóa phụ đề"
-        aria-label="Xóa phụ đề"
+        :title="t('topBar.clearSubtitles')"
+        :aria-label="t('topBar.clearSubtitles')"
         @click="$emit('clear-transcripts')"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -147,8 +150,8 @@
         <button
           class="window-button minimize-window"
           type="button"
-          title="Thu nhỏ"
-          aria-label="Thu nhỏ cửa sổ"
+          :title="t('topBar.minimize')"
+          :aria-label="t('topBar.minimizeAria')"
           @click="$emit('minimize-window')"
         >
           <span></span>
@@ -157,8 +160,8 @@
         <button
           class="window-button maximize-window"
           type="button"
-          :title="isMaximized ? 'Khôi phục kích thước' : 'Phóng to'"
-          :aria-label="isMaximized ? 'Khôi phục kích thước' : 'Phóng to cửa sổ'"
+          :title="isMaximized ? t('topBar.restore') : t('topBar.maximize')"
+          :aria-label="isMaximized ? t('topBar.restore') : t('topBar.maximizeAria')"
           @click="$emit('toggle-maximize-window')"
         >
           <span
@@ -171,8 +174,8 @@
         <button
           class="window-button close-window"
           type="button"
-          title="Đóng"
-          aria-label="Đóng cửa sổ"
+          :title="t('topBar.close')"
+          :aria-label="t('topBar.closeAria')"
           @click="$emit('close-window')"
         >
           <span></span>
@@ -183,6 +186,8 @@
 </template>
 
 <script setup>
+import { t } from '../i18n'
+
 defineProps({
   isLocked: {
     type: Boolean,

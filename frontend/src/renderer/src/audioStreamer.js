@@ -1,3 +1,5 @@
+import { t } from './i18n'
+
 const TARGET_SAMPLE_RATE = 16000
 
 /*
@@ -74,7 +76,7 @@ export class AudioStreamer {
     const allowedSources = ['system', 'microphone']
 
     if (!allowedSources.includes(sourceType)) {
-      throw new Error(`Nguồn âm thanh không hợp lệ: ${sourceType}`)
+      throw new Error(t('streamerErrors.invalidSource', { source: sourceType }))
     }
 
     this.sourceType = sourceType
@@ -138,7 +140,7 @@ export class AudioStreamer {
 
         hasFinished = true
 
-        reject(new Error('Không thể kết nối backend trong vòng 5 giây.'))
+        reject(new Error(t('streamerErrors.backendTimeout')))
 
         this.socket?.close()
       }, 5000)
@@ -171,7 +173,7 @@ export class AudioStreamer {
 
           window.clearTimeout(timeoutId)
 
-          reject(new Error('Không thể kết nối tới backend.'))
+          reject(new Error(t('streamerErrors.backendUnreachable')))
         }
       }
 
@@ -183,7 +185,7 @@ export class AudioStreamer {
         if (!hasFinished) {
           hasFinished = true
 
-          reject(new Error('WebSocket bị đóng trước khi kết nối.'))
+          reject(new Error(t('streamerErrors.socketClosedEarly')))
         }
       }
     })
@@ -194,7 +196,7 @@ export class AudioStreamer {
    */
   async initMicrophoneCapture() {
     if (!navigator.mediaDevices?.getUserMedia) {
-      throw new Error('Thiết bị không hỗ trợ microphone.')
+      throw new Error(t('streamerErrors.micUnsupported'))
     }
 
     this.mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -232,7 +234,7 @@ export class AudioStreamer {
     const audioTracks = this.mediaStream.getAudioTracks()
 
     if (audioTracks.length === 0) {
-      throw new Error('Không tìm thấy microphone.')
+      throw new Error(t('streamerErrors.micNotFound'))
     }
 
     console.log('🎤 Microphone:', audioTracks[0].label || 'Thiết bị mặc định')
@@ -257,7 +259,7 @@ export class AudioStreamer {
         : null)
 
     if (!getSources) {
-      throw new Error('Không tìm thấy API lấy nguồn màn hình.')
+      throw new Error(t('streamerErrors.sourcesApiMissing'))
     }
 
     const sources = await getSources({
@@ -265,7 +267,7 @@ export class AudioStreamer {
     })
 
     if (!sources || sources.length === 0) {
-      throw new Error('Không tìm thấy màn hình để lấy âm thanh.')
+      throw new Error(t('streamerErrors.screenNotFound'))
     }
 
     const sourceId = sources[0].id
@@ -300,10 +302,10 @@ export class AudioStreamer {
 
     if (audioTracks.length === 0) {
       if (this.platform === 'darwin') {
-        throw new Error('macOS chưa cấp quyền thu âm thanh hệ thống.')
+        throw new Error(t('streamerErrors.macPermission'))
       }
 
-      throw new Error('Nguồn màn hình không cung cấp âm thanh hệ thống.')
+      throw new Error(t('streamerErrors.noSystemAudio'))
     }
 
     this.watchMediaTracks()
@@ -356,7 +358,7 @@ export class AudioStreamer {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext
 
     if (!AudioContextClass) {
-      throw new Error('Thiết bị không hỗ trợ AudioContext.')
+      throw new Error(t('streamerErrors.audioContextUnsupported'))
     }
 
     try {

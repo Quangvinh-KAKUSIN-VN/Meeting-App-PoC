@@ -4,6 +4,8 @@ import { AudioStreamer } from '../audioStreamer'
 
 import { LANGUAGE_DIRECTIONS } from '../constants/appearance'
 
+import { t } from '../i18n'
+
 /*
  * Chỉ dùng khi IPC 'backend:get-endpoint' không khả dụng
  * (chạy renderer ngoài Electron, hoặc preload chưa expose).
@@ -303,9 +305,15 @@ export function useTranscription(translationDirection) {
       streamer = null
       isRecording.value = false
 
-      const sourceLabel = audioSource.value === 'microphone' ? 'microphone' : 'âm thanh máy tính'
+      const sourceLabel =
+        audioSource.value === 'microphone' ? t('errors.sourceMicrophone') : t('errors.sourceSystem')
 
-      addErrorMessage(`Không thể mở ${sourceLabel}: ${error?.message || 'Lỗi không xác định'}`)
+      addErrorMessage(
+        t('errors.openSourceFailed', {
+          source: sourceLabel,
+          reason: error?.message || t('errors.unknown')
+        })
+      )
     } finally {
       isStarting.value = false
     }
@@ -370,9 +378,7 @@ export function useTranscription(translationDirection) {
         await stopRecording()
       }
 
-      addErrorMessage(
-        `Backend đã dừng hoạt động (code=${code}). Vui lòng khởi động lại ứng dụng.`
-      )
+      addErrorMessage(t('errors.backendDown', { code }))
     })
   }
 
@@ -408,9 +414,9 @@ export function useTranscription(translationDirection) {
     const now = new Date()
 
     const lines = [
-      'BIÊN BẢN PHIÊN DỊCH CUỘC HỌP',
-      `Xuất lúc: ${formatExportTimestamp(now)}`,
-      `Số câu đã dịch: ${sessionHistory.value.length}`,
+      t('export.title'),
+      t('export.exportedAt', { time: formatExportTimestamp(now) }),
+      t('export.sentenceCount', { count: sessionHistory.value.length }),
       '',
       '='.repeat(50),
       ''
@@ -448,7 +454,7 @@ export function useTranscription(translationDirection) {
     const pad = (value) => String(value).padStart(2, '0')
 
     const fileName =
-      `bien-ban-hop-${now.getFullYear()}` +
+      `${t('export.fileNamePrefix')}-${now.getFullYear()}` +
       `${pad(now.getMonth() + 1)}` +
       `${pad(now.getDate())}-` +
       `${pad(now.getHours())}` +

@@ -27,11 +27,13 @@
 
     <div class="footer-spacer"></div>
 
-    <span class="resize-helper"> Kéo cạnh hoặc góc để đổi kích thước </span>
+    <span class="resize-helper">{{ t('footer.resizeHint') }}</span>
   </footer>
 </template>
 
 <script setup>
+import { t } from '../i18n'
+
 defineProps({
   isRecording: {
     type: Boolean,

@@ -1,5 +1,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
+import { t } from '../i18n'
+
 export function useWindowControls(options = {}) {
   const { onBeforeClose } = options
 
@@ -23,7 +25,7 @@ export function useWindowControls(options = {}) {
         return 'Linux'
 
       default:
-        return 'Unknown OS'
+        return t('platform.unknown')
     }
   })
 
