@@ -2,8 +2,8 @@
 """Kiểm thử postprocess.py — chạy: python test_postprocess.py"""
 from pathlib import Path
 
-from postprocess import (Glossary, NameProtector, PostProcessor,
-                         TranslationCache, cleanup, fix_decimal_locale,
+from postprocess import (Deduper, Glossary, Lexicon, NameProtector, PostProcessor,
+                         TranslationCache, cleanup, fix_decimal_locale, fix_duration,
                          normalize_source, people_to_entries, strip_fillers)
 
 G = Glossary.load(Path(__file__).resolve().parent / "glossary.json")
@@ -263,6 +263,139 @@ check("hả (dấu hỏi) KHÔNG bị cắt",
       strip_fillers("anh làm xong chưa hả", "vi"), "anh làm xong chưa hả")
 check("'và' KHÔNG bị cắt nhầm thành 'v'",
       strip_fillers("cà phê và trà", "vi"), "cà phê và trà")
+check("えーとですね (câu mào đầu) bị cắt cả cụm",
+      strip_fillers("えーとですね、この件なんですけど", "ja"), "この件なんですけど")
+check("あのですね đầu câu bị cắt",
+      strip_fillers("あのですね仕様がまだ固まっていません", "ja"), "仕様がまだ固まっていません")
+check("そうですね (câu trả lời thật) KHÔNG bị cắt",
+      strip_fillers("そうですね", "ja"), "そうですね")
+
+print("--- ビュー nằm trong từ khác không bị đổi thành Vue")
+check("レビュー -> review, không phải レVue",
+      G.fix_source("設計書をレビューしてください", "ja")[0], "設計書をreviewしてください")
+check("プレビュー giữ nguyên",
+      G.fix_source("プレビュー画面を確認します", "ja")[0], "プレビュー画面を確認します")
+check("ビュー đứng riêng vẫn là Vue",
+      G.fix_source("ビューの画面を更新します", "ja")[0], "Vueの画面を更新します")
+check("仕様 trần -> spec",
+      G.fix_source("仕様がまだ固まっていません", "ja")[0], "specがまだ固まっていません")
+check("ポッドキャスト giữ nguyên, không thành podキャスト",
+      G.fix_source("このポッドキャストは長いです", "ja")[0], "このポッドキャストは長いです")
+check("ポッド đứng riêng vẫn là pod",
+      G.fix_source("ポッドを再起動します", "ja")[0], "podを再起動します")
+
+print("--- Thuật ngữ katakana ngắn không được cắt vào giữa từ katakana khác")
+for word in ("プログラム", "ブログ", "レスポンス", "テキスト", "レストラン", "マージン",
+             "ガイドライン", "コンテスト", "コミットメント"):
+    check(f"{word} giữ nguyên", G.fix_source(f"{word}を確認します", "ja")[0], f"{word}を確認します")
+check("ログ đứng riêng vẫn thành log",
+      G.fix_source("ログを確認します", "ja")[0], "logを確認します")
+check("テスト+データ (ghép toàn thuật ngữ) vẫn được thay",
+      G.fix_source("テストデータを用意します", "ja")[0], "test dataを用意します")
+
+print("--- Từ đời thường đi qua bằng ký hiệu giữ chỗ")
+LEX = Lexicon([{"vi": "gạo lứt", "ja": ["玄米"]}, {"vi": "cá hồi", "ja": ["鮭"]},
+               {"vi": "việc giặt giũ", "ja": ["洗濯"]}, {"vi": "siêu thị", "ja": ["スーパー"]},
+               {"vi": "chồng", "ja": ["旦那さん", "夫"]}, {"vi": "cơm", "ja": ["ごはん"]},
+               {"vi": "chuyến công tác", "verb": "đi công tác", "ja": ["出張"]},
+               {"vi": "bài tập về nhà", "ja": ["宿題"]}],
+              [{"vi": "Mọi người vất vả rồi ạ.", "ja": ["お疲れ様です"]}])
+check("từ nhiều kanji", LEX.protect("みそ汁と玄米でした", "ja", "vi"),
+      ("みそ汁とW1でした", {"W1": "gạo lứt"}))
+check("kanji đơn sau từ chỉ thời gian", LEX.protect("昨日鮭を食べました", "ja", "vi")[0],
+      "昨日W1を食べました")
+check("kanji đơn trong từ ghép KHÔNG khớp", LEX.protect("鮭茶漬けを食べました", "ja", "vi")[1], {})
+check("洗濯 trong 洗濯機 KHÔNG khớp", LEX.protect("洗濯機を買いました", "ja", "vi")[1], {})
+check("毎日洗濯 vẫn khớp", LEX.protect("毎日洗濯をします", "ja", "vi")[0], "毎日W1をします")
+check("katakana trong từ dài hơn KHÔNG khớp",
+      LEX.protect("スーパーユーザーで実行します", "ja", "vi")[1], {})
+check("ごはん trong 朝ごはん KHÔNG khớp", LEX.protect("朝ごはんを作ります", "ja", "vi")[1], {})
+check("ごはん đứng riêng vẫn khớp", LEX.protect("毎日ごはんを食べます", "ja", "vi")[0],
+      "毎日W1を食べます")
+check("danh từ dùng làm động từ, mục không có verb -> KHÔNG khớp",
+      LEX.protect("宿題します", "ja", "vi")[1], {})
+check("mục có verb: dạng động từ lấy nghĩa verb",
+      LEX.protect("来週出張します", "ja", "vi"), ("来週W1します", {"W1": "đi công tác"}))
+check("mục có verb: dạng danh từ vẫn lấy nghĩa vi",
+      LEX.protect("来週の出張は中止です", "ja", "vi"), ("来週のW1は中止です", {"W1": "chuyến công tác"}))
+check("bỏ chữ 'làm' model thêm trước động từ",
+      LEX.restore("Tuần sau em làm W1.", {"W1": "đi công tác"}), ("Tuần sau em đi công tác.", 0))
+check("danh từ thì giữ nguyên chữ 'làm'",
+      LEX.restore("Em làm W1 rồi.", {"W1": "bài tập về nhà"}), ("Em làm bài tập về nhà rồi.", 0))
+check("câu nguồn đã có sẵn chữ giống ký hiệu -> bỏ qua",
+      LEX.protect("W1の玄米です", "ja", "vi")[1], {})
+check("chỉ áp cho chiều ja→vi", LEX.protect("玄米が好きです", "ja", "en")[1], {})
+PL = PostProcessor(G, cache=TranslationCache(), lexicon=LEX)
+lx, words = PL.protect_words("昨日旦那さんと田中さんが来ました", "ja", "vi")
+mt, names = PL.protect_names(lx, "ja")
+check("từ đời thường trước, tên người sau, ký hiệu không trùng",
+      (mt, words, names),
+      ("昨日W1と PnA が来ました", {"W1": "chồng"}, {"PnA": "田中さん"}))
+out, lost = PL.restore_words("Hôm qua W1 và PnA đã đến.", words)
+check("điền nghĩa vào, không mất từ nào",
+      (PL.restore_names(out, names)[0], lost), ("Hôm qua chồng và 田中さん đã đến.", 0))
+check("model làm mất ký hiệu -> báo để dịch lại",
+      PL.restore_words("Hôm qua đã đến.", words)[1], 1)
+check("ký hiệu bị model tách / viết thường vẫn nhận ra",
+      PL.restore_words("Hôm qua w 1 đã đến.", words), ("Hôm qua chồng đã đến.", 0))
+check("đứng đầu câu thì viết hoa",
+      PL.restore_words("Xong rồi. W1 đã đến.", words)[0], "Xong rồi. Chồng đã đến.")
+
+print("--- Từ chỉ thời gian / danh xưng đứng trước さん không bị nuốt vào tên người")
+NP = PostProcessor(G, cache=TranslationCache())
+check("昨日 không dính vào tên", NP.protect_names("昨日田中さんと話しました", "ja"),
+      ("昨日 PnA と話しました", {"PnA": "田中さん"}))
+check("昨日旦那さん không phải tên người", NP.protect_names("昨日旦那さんと話しました", "ja")[1], {})
+check("お医者さん không phải tên người", NP.protect_names("昨日お医者さんと話しました", "ja")[1], {})
+check("ご近所さん không phải tên người", NP.protect_names("昨日ご近所さんと話しました", "ja")[1], {})
+check("聴くんだ là động từ, không phải tên + くん",
+      NP.protect_names("英語のポッドキャストもよく聴くんだけど", "ja")[1], {})
+check("聞くんですか cũng vậy", NP.protect_names("毎日何時間ぐらい聞くんですか", "ja")[1], {})
+check("田中くん vẫn là tên", NP.protect_names("田中くんが来ました", "ja")[1], {"PnA": "田中くん"})
+check("ký hiệu tên bị model tách 'Pn A' vẫn bung được",
+      NP.restore_names("Hôm qua Pn A đã đến.", {"PnA": "田中さん"}), ("Hôm qua 田中さん đã đến.", 0))
+
+print("--- Mục chỉ có verb: chỉ thay dạng động từ")
+VLEX = Lexicon([{"verb": "háo hức", "ja": ["ワクワク"]}])
+check("ワクワクします -> thay", VLEX.protect("明日はワクワクします", "ja", "vi"),
+      ("明日はW1します", {"W1": "háo hức"}))
+check("ワクワク không kèm する -> để nguyên", VLEX.protect("ワクワクが止まりません", "ja", "vi")[1], {})
+
+print("--- Mẩu câu không có nội dung thì bỏ, 何か đệm đầu câu thì cắt")
+check("なんですよ rơi ra sau câu trước", strip_fillers("なんですよ", "ja"), "")
+check("một chữ kana lẻ", strip_fillers("ち", "ja"), "")
+check("なんですか (= 何ですか) là câu hỏi thật, giữ", strip_fillers("なんですか", "ja"), "なんですか")
+check("何か đệm sau tiếng thốt", strip_fillers("そうそう何か毎朝7時に起きます", "ja"), "そうそう毎朝7時に起きます")
+check("何か質問 giữ nguyên", strip_fillers("何か質問はありますか", "ja"), "何か質問はありますか")
+check("何かあれば giữ nguyên", strip_fillers("でも何かあれば連絡してください", "ja"),
+      "でも何かあれば連絡してください")
+
+print("--- Dọn bản dịch: số đầu câu, gạch đầu dòng thừa, thời lượng")
+check("câu mở đầu bằng số không viết hoa chữ sau", cleanup("6 giờ, em thấy ngắn.", "vi"), "6 giờ, em thấy ngắn.")
+check("gạch đầu dòng thừa", cleanup("- vâng, mọi người ổn không?", "vi"), "Vâng, mọi người ổn không?")
+check("số âm đầu câu giữ nguyên", cleanup("-5 độ", "vi"), "-5 độ")
+check("6時間 -> 6 tiếng", fix_duration("平日は6時間ぐらい寝てます", "Ngày thường ngủ khoảng 6 giờ."),
+      "Ngày thường ngủ khoảng 6 tiếng.")
+check("6時 (giờ đồng hồ) giữ nguyên", fix_duration("6時に起きます", "Em dậy lúc 6 giờ."), "Em dậy lúc 6 giờ.")
+check("何時間 -> mấy tiếng", fix_duration("あと何時間しか残っていない", "Chỉ còn mấy giờ thôi."),
+      "Chỉ còn mấy tiếng thôi.")
+
+print("--- Câu cửa miệng khớp nguyên câu")
+check("khớp, bỏ qua dấu câu", PL.phrase("お疲れ様です。", "ja", "vi"), "Mọi người vất vả rồi ạ.")
+check("nằm trong câu dài hơn thì KHÔNG khớp", PL.phrase("お疲れ様ですと言いました", "ja", "vi"), None)
+check("chỉ áp cho chiều ja→vi", PL.phrase("お疲れ様です", "ja", "en"), None)
+check("bỏ qua tiếng thốt đứng trước", PL.phrase("あっお疲れ様です", "ja", "vi"), "Mọi người vất vả rồi ạ.")
+check("hai câu cửa miệng nối bằng dấu phẩy", PL.phrase("お疲れ様です、お疲れ様です", "ja", "vi"),
+      "Mọi người vất vả rồi ạ. Mọi người vất vả rồi ạ.")
+check("một vế không phải câu cửa miệng -> không khớp", PL.phrase("お疲れ様です、田中です", "ja", "vi"), None)
+
+print("--- Lọc trùng không nuốt câu dài chứa một câu ngắn vừa nói")
+D = Deduper()
+D.is_duplicate("はい")
+check("'はい' rồi tới câu dài bắt đầu bằng はい",
+      D.is_duplicate("はい、わかりました。今週中に見積もりを出します"), False)
+check("lặp lại y hệt vẫn bị coi là trùng",
+      D.is_duplicate("はい、わかりました。今週中に見積もりを出します"), True)
 
 print(f"\n{'='*50}\nKẾT QUẢ: {PASS} đạt / {FAIL} lỗi")
 raise SystemExit(1 if FAIL else 0)

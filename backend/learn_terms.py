@@ -105,8 +105,7 @@ def run(lang: str, wav_dir: Path, apply: bool, out_json: Path) -> None:
     print("⏳ Nạp model (dùng chung code với main.py, mất ~30-60s)...")
     import main  # noqa: E402
 
-    rec = main.recognizer_ja if lang == "ja" else main.recognizer_vi
-    lock = main.recognizer_ja_lock if lang == "ja" else main.recognizer_vi_lock
+    rec, lock = main.RECOGNIZERS[lang]
 
     slug_map = {slugify(e["term"]): e for e in main.GLOSSARY.entries}
 

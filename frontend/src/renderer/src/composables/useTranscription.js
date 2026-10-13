@@ -6,21 +6,12 @@ import { LANGUAGE_DIRECTIONS } from '../constants/appearance'
 
 import { t } from '../i18n'
 
-/*
- * Chỉ dùng khi IPC 'backend:get-endpoint' không khả dụng
- * (chạy renderer ngoài Electron, hoặc preload chưa expose).
- *
- * Giá trị thật lấy từ BACKEND_PORT trong electron/main/index.js.
- */
+// Dự phòng khi IPC 'backend:get-endpoint' không khả dụng.
 const FALLBACK_BACKEND_PORT = 8765
 
 const MAX_VISIBLE_LINES = 30
 
-/**
- * translationDirection: ref<key của LANGUAGE_DIRECTIONS> lấy từ
- * useAppearanceSettings(), truyền vào để biết nên gọi
- * endpoint nào và ghi chiều dịch vào lịch sử.
- */
+// translationDirection: ref<key của LANGUAGE_DIRECTIONS> — quyết định endpoint và chiều ghi vào lịch sử.
 export function useTranscription(translationDirection) {
   const audioSource = ref('system')
   const isRecording = ref(false)
@@ -35,28 +26,17 @@ export function useTranscription(translationDirection) {
   let historyId = 0
   let lastRawTranscript = ''
 
-  /*
-   * Backend đánh số msg_id lại từ 1 mỗi khi có kết nối WebSocket mới.
-   * Nhân thêm sessionKey để dòng của phiên mới không ghi đè dòng phiên cũ.
-   */
+  // Backend đánh số msg_id lại từ 1 ở mỗi kết nối; nhân sessionKey để phiên mới không đè dòng phiên cũ.
   let sessionKey = 0
 
-  /*
-   * Dòng đã bị cắt khỏi màn hình do vượt MAX_VISIBLE_LINES.
-   * Nếu backend gửi bản cập nhật muộn cho một dòng đã bị cắt, bỏ qua —
-   * không thì nó lại được push xuống cuối và thành dòng trùng.
-   */
+  // Dòng đã bị cắt khỏi màn hình; bản cập nhật muộn cho chúng bị bỏ qua.
   let retiredKeys = new Set()
 
   const hasHistory = computed(() => {
     return sessionHistory.value.length > 0
   })
 
-  /*
-   * BUG-012: khi đang chạy thì không cho đổi nguồn âm thanh,
-   * vì hai luồng sẽ cùng được xử lý.
-   * UI dùng cờ này để disable các card chọn nguồn.
-   */
+  // BUG-012: đang chạy thì không cho đổi nguồn âm thanh.
   const canChangeSettings = computed(() => {
     return !isRecording.value && !isStarting.value
   })
@@ -71,13 +51,7 @@ export function useTranscription(translationDirection) {
     subtitleBoxRef.value.scrollTop = subtitleBoxRef.value.scrollHeight
   }
 
-  /**
-   * Lấy URL WebSocket từ main process.
-   *
-   * Cổng do BACKEND_PORT trong electron/main/index.js quyết định và được
-   * truyền xuống Python qua biến môi trường KATOBA_PORT. Nhờ vậy đổi cổng
-   * chỉ phải sửa một chỗ duy nhất.
-   */
+  // Lấy URL WebSocket từ main process (cổng: BACKEND_PORT trong electron/main/index.js).
   const resolveWebSocketUrl = async (wsPath, target) => {
     let host = '127.0.0.1'
     let port = FALLBACK_BACKEND_PORT
@@ -96,15 +70,11 @@ export function useTranscription(translationDirection) {
     return `ws://${host}:${port}/ws/audio/${wsPath}?target=${encodeURIComponent(target)}`
   }
 
-  /**
-   * Giao thức hiện tại: { id, src, dst, final }
-   *
-   *   id    — cùng id nghĩa là CẬP NHẬT dòng cũ, không phải dòng mới.
-   *           SentenceBuffer ở backend gộp các mẩu VAD chưa thành câu rồi
-   *           dịch lại toàn bộ, nên một câu nói sinh ra nhiều message
-   *           cùng id với nội dung ngày càng đầy đủ.
-   *   final — false nghĩa là còn đang nghe tiếp, nên render mờ/nghiêng.
-   *
+  /*
+   * Giao thức: { id, src, dst, final, pending, dropped } — cùng id là cập nhật dòng cũ.
+   *   final=false  bản nháp (vẽ mờ + nghiêng), sẽ bị bản final cùng id thay
+   *   pending      đã có câu nguồn, chưa có bản dịch
+   *   dropped      gỡ dòng chưa chốt
    * Vẫn chấp nhận text thuần và { src, dst } của giao thức cũ.
    */
   const parseIncomingMessage = (raw) => {
@@ -114,7 +84,9 @@ export function useTranscription(translationDirection) {
       id: null,
       src: '',
       dst: trimmedRaw,
-      final: true
+      final: true,
+      pending: false,
+      dropped: false
     }
 
     if (!trimmedRaw.startsWith('{')) {
@@ -139,9 +111,11 @@ export function useTranscription(translationDirection) {
         id: Number.isFinite(parsed.id) ? parsed.id : null,
         src: typeof parsed.src === 'string' ? parsed.src.trim() : '',
         dst,
-        final: typeof parsed.final === 'boolean' ? parsed.final : true
+        final: typeof parsed.final === 'boolean' ? parsed.final : true,
+        pending: parsed.pending === true,
+        dropped: parsed.dropped === true
       }
-    } catch (error) {
+    } catch {
       return asPlainText
     }
   }
@@ -151,19 +125,37 @@ export function useTranscription(translationDirection) {
       return
     }
 
-    const { id: backendId, src: sourceText, dst, final } = parseIncomingMessage(receivedText)
+    const {
+      id: backendId,
+      src: sourceText,
+      dst,
+      final,
+      pending,
+      dropped
+    } = parseIncomingMessage(receivedText)
 
     const translatedText = dst.trim()
 
-    if (!translatedText) {
+    if (dropped) {
+      if (backendId !== null) {
+        const droppedKey = `s${sessionKey}:${backendId}`
+
+        // Chỉ gỡ dòng CHƯA chốt; câu đã chốt là của biên bản, không ai được gỡ
+        transcripts.value = transcripts.value.filter((item) => {
+          return item.key !== droppedKey || item.final
+        })
+      }
+
       return
     }
 
-    /*
-     * Giao thức cũ không có id -> mỗi message là một dòng mới,
-     * nên vẫn cần lọc trùng liên tiếp như trước.
-     * Giao thức mới có backend lọc trùng (Deduper) rồi.
-     */
+    const isPendingOnly = !translatedText && pending && Boolean(sourceText) && backendId !== null
+
+    if (!translatedText && !isPendingOnly) {
+      return
+    }
+
+    // Giao thức cũ không có id nên vẫn phải lọc trùng liên tiếp.
     if (backendId === null) {
       const dedupeKey = `${sourceText}|${translatedText}`
 
@@ -184,9 +176,18 @@ export function useTranscription(translationDirection) {
     const existingLine = transcripts.value.find((item) => item.key === lineKey)
 
     if (existingLine) {
+      // Câu đã chốt thì cố định, bản nháp tới muộn không được ghi đè.
+      if (existingLine.final && !final) {
+        return
+      }
+
       existingLine.src = sourceText
-      existingLine.text = translatedText
       existingLine.final = final
+
+      // Message pending không mang bản dịch -> đừng xoá bản nháp đang hiện
+      if (!isPendingOnly) {
+        existingLine.text = translatedText
+      }
     } else {
       transcriptId += 1
 
@@ -200,12 +201,7 @@ export function useTranscription(translationDirection) {
       })
     }
 
-    /*
-     * Lịch sử xuất file CHỈ ghi câu đã chốt.
-     *
-     * Nếu ghi cả câu tạm thời thì biên bản sẽ đầy những mẩu dở dang
-     * như "Phần này trước khi giao" nằm ngay trên câu hoàn chỉnh của nó.
-     */
+    // Lịch sử xuất file chỉ ghi câu đã chốt.
     if (final) {
       const existingEntry = sessionHistory.value.find((entry) => entry.key === lineKey)
 
@@ -254,10 +250,7 @@ export function useTranscription(translationDirection) {
     })
   }
 
-  /*
-   * BUG-012: chặn đổi nguồn âm thanh khi đang chạy.
-   * Trả false để UI biết thao tác bị từ chối.
-   */
+  // BUG-012: chặn đổi nguồn âm thanh khi đang chạy; trả false nếu bị từ chối.
   const setAudioSource = (nextSource) => {
     if (!canChangeSettings.value) {
       return false
@@ -333,20 +326,15 @@ export function useTranscription(translationDirection) {
 
     streamer = null
 
-    /*
-     * Câu đang dở sẽ không bao giờ nhận được bản final nữa
-     * -> chốt lại để nó không kẹt ở trạng thái mờ vĩnh viễn.
-     */
+    // Chốt các dòng nháp đang dở, gỡ dòng chỉ có câu nguồn.
+    transcripts.value = transcripts.value.filter((line) => line.text)
+
     for (const line of transcripts.value) {
       line.final = true
     }
   }
 
-  /*
-   * BUG-011: đổi chiều dịch giữa chừng làm phụ đề hai chiều lẫn vào nhau,
-   * vì phiên phía backend không được tạo lại (mỗi chiều là một endpoint
-   * WebSocket khác nhau: /ws/audio/ja và /ws/audio/vi).
-   */
+  // BUG-011: đổi chiều dịch giữa chừng làm phụ đề hai chiều lẫn vào nhau.
   watch(translationDirection, async (nextDirection, previousDirection) => {
     if (nextDirection === previousDirection) {
       return
@@ -366,10 +354,7 @@ export function useTranscription(translationDirection) {
     await startRecording()
   })
 
-  /*
-   * BUG-026: backend chết thì renderer phải biết,
-   * không thì AudioStreamer cứ thử reconnect mù rồi bỏ cuộc trong im lặng.
-   */
+  // BUG-026: báo cho renderer khi backend chết.
   if (typeof window !== 'undefined' && window.api?.onBackendDown) {
     window.api.onBackendDown(async ({ code }) => {
       console.error(`❌ Backend đã dừng (code=${code})`)
@@ -436,13 +421,7 @@ export function useTranscription(translationDirection) {
       lines.push('')
     }
 
-    /*
-     * BOM ở đầu file (BUG-013).
-     *
-     * Không có BOM, Excel và Notepad đời cũ trên Windows đọc UTF-8 thành
-     * Shift-JIS hoặc CP1258 -> hỏng cả chữ Nhật lẫn chữ Việt có dấu.
-     * Ba byte này rẻ hơn nhiều so với việc giải thích cho người dùng.
-     */
+    // BOM (BUG-013): thiếu thì Excel/Notepad cũ trên Windows đọc sai UTF-8.
     const fileContent = '\uFEFF' + lines.join('\r\n')
 
     const blob = new Blob([fileContent], {

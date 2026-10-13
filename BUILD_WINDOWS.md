@@ -44,7 +44,7 @@ Lệnh tạo ra `backend\dist\main\main.exe` và `_internal\` (khoảng 1,5 phú
 
 ```powershell
 Copy-Item -Recurse -Force models dist\main\models
-Copy-Item -Force glossary.json, people.json dist\main\
+Copy-Item -Force glossary.json, people.json, everyday.json dist\main\
 ```
 
 Chạy thử bản exe, tách hẳn khỏi Electron:
