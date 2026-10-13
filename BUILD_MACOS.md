@@ -73,7 +73,7 @@ Chép model và glossary vào cạnh binary (PyInstaller không tự làm):
 
 ```bash
 cp -R models dist/main/models
-cp glossary.json dist/main/
+cp glossary.json everyday.json dist/main/
 cp people.json dist/main/      # danh sách người dự — xem TEN_NGUOI_VA_NGAT_CAU.md
 ```
 

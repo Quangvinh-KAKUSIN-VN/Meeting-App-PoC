@@ -22,12 +22,19 @@
       </div>
 
       <div
+        v-if="item.text"
         class="subtitle-line"
         :class="{
-          error: item.type === 'error'
+          error: item.type === 'error',
+          draft: !item.final && item.type !== 'error'
         }"
       >
         {{ item.text }}
+      </div>
+
+      <!-- Đã nghe ra câu nguồn, đang chờ trọn câu để dịch -->
+      <div v-else class="subtitle-pending" aria-hidden="true">
+        <i v-for="index in 3" :key="index"></i>
       </div>
     </div>
   </div>
@@ -192,6 +199,20 @@ defineProps({
     0 0 var(--subtitle-shadow-soft) rgba(0, 0, 0, 0.86);
 
   overflow-wrap: anywhere;
+
+  /* Bản nháp -> bản chốt đổi màu dần, không nháy */
+  transition:
+    color 220ms ease,
+    opacity 220ms ease;
+}
+
+/* Bản nháp: mờ + nghiêng, sẽ bị bản chốt thay. */
+.subtitle-line.draft {
+  color: rgba(214, 211, 209, 0.78);
+
+  font-style: italic;
+
+  opacity: 0.82;
 }
 
 .subtitle-line.error {
@@ -202,8 +223,50 @@ defineProps({
   font-weight: 600;
 }
 
+.subtitle-pending {
+  width: 100%;
+
+  line-height: 1;
+  text-align: var(--subtitle-align);
+}
+
+.subtitle-pending i {
+  width: 6px;
+  height: 6px;
+  margin: 0 2px;
+
+  display: inline-block;
+
+  border-radius: 50%;
+
+  background: var(--subtitle-color);
+
+  opacity: 0.25;
+
+  animation: pending-dot 1s ease-in-out infinite;
+}
+
+.subtitle-pending i:nth-child(2) {
+  animation-delay: 160ms;
+}
+
+.subtitle-pending i:nth-child(3) {
+  animation-delay: 320ms;
+}
+
 .is-focus-mode .transcript-list {
   justify-content: center;
+}
+
+@keyframes pending-dot {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
 }
 
 @keyframes wave-listening {

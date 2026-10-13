@@ -330,12 +330,17 @@ _PLACEHOLDER = re.compile("\x02(\\d+)\x02")
 def _protected_replace(text: str,
                        guards: list[tuple[re.Pattern, int]],
                        canonicals: list[re.Pattern],
-                       replacements: list[tuple[re.Pattern, str, int]]) -> tuple[str, int]:
+                       replacements: list[tuple[re.Pattern, str, int]],
+                       frozen: list[tuple[int, int]] = ()) -> tuple[str, int]:
     """"""
     if not text:
         return text, 0
 
     slots: list[str] = []
+
+    for start, end in sorted(frozen, reverse=True):
+        slots.append(text[start:end])
+        text = f"{text[:start]}\x02{len(slots) - 1}\x02{text[end:]}"
 
     def _freeze(m: re.Match) -> str:
         slots.append(m.group(0))          # giữ nguyên văn
@@ -431,6 +436,33 @@ class Glossary:
                 e["_guard_pat"][lang] = [(_compile_pattern(g, lang), len(g))
                                          for g in e[f"{lang}_guard"]]
 
+        self._kata_forms = {h for e in self.entries for h in e["ja_hears"]
+                            if _KATA_RUN.fullmatch(h)}
+        short = sorted((f for f in self._kata_forms if len(f) <= 3), key=len, reverse=True)
+        self._kata_short = re.compile("|".join(map(re.escape, short))) if short else None
+
+    def _tiles(self, word: str) -> bool:
+        """True nếu `word` ghép được hoàn toàn từ các thuật ngữ katakana (テスト+データ)."""
+        reach = [True] + [False] * len(word)
+        for i in range(len(word)):
+            if reach[i]:
+                for form in self._kata_forms:
+                    if word.startswith(form, i):
+                        reach[i + len(form)] = True
+        return reach[-1]
+
+    def _stray_short_forms(self, text: str) -> list[tuple[int, int]]:
+        """Thuật ngữ katakana ngắn nằm GIỮA một từ katakana khác (ログ trong ブログ)."""
+        if not self._kata_short:
+            return []
+        spans = []
+        for run in _KATA_RUN.finditer(text):
+            word = run.group(0)
+            if not self._tiles(word):
+                spans += [(run.start() + m.start(), run.start() + m.end())
+                          for m in self._kata_short.finditer(word)]
+        return spans
+
     @classmethod
     def load(cls, path: Path, people_path: Path | None = None) -> "Glossary":
         """"""
@@ -465,7 +497,8 @@ class Glossary:
                 repls.append((pat, e["term"], n))
             repls.append((e["_term_pat"][lang], e["term"], e["_term_len"]))
 
-        return _protected_replace(text, guards, [], repls)
+        frozen = self._stray_short_forms(text) if lang == "ja" else []
+        return _protected_replace(text, guards, [], repls, frozen)
 
     # --------------------------------------------------------------- tầng 2
 
@@ -508,9 +541,11 @@ _NOT_A_NAME = {
     "お兄", "兄", "お姉", "姉", "おじ", "おば", "おじい", "おばあ", "祖父",
     "祖母", "息子", "娘", "奥", "旦那", "主人", "店員", "患者", "神", "仏",
     "お疲れ", "ご苦労", "おまわり", "人", "方", "者", "誰", "どなた",
+    "医者", "赤", "彼", "嫁", "婿", "孫", "子", "大家", "駅員", "業者", "運転手", "看護師",
+    "社員", "学生", "職人", "近所",
 }
 
-_NOT_A_NAME_SUFFIX = ("屋", "店", "社", "様方")
+_NOT_A_NAME_SUFFIX = ("屋", "店", "社", "様方") + tuple(w for w in _NOT_A_NAME if len(w) >= 2)
 
 _NAME_CHARS = r"\u4e00-\u9fff\u30a0-\u30ff\uff66-\uff9dA-Za-z\u30fc"
 
@@ -520,6 +555,7 @@ _JA_NAME_RE = re.compile(
 )
 
 _NAME_SLOT_RE = re.compile(r"\bPn([A-Z])\b")
+_KU_VERB_KANJI = "聴聞行書働歩動続届着引置開焼泣咲磨履描乾空向付突弾効利解吹巻敷拭招抱除省驚傾頂"
 
 
 def _looks_like_name(name: str) -> bool:
@@ -549,12 +585,18 @@ class NameProtector:
 
         def _sub(m: re.Match) -> str:
             name = m.group("name")
+            lead = next((w for w in _JA_TIME_WORDS if name.startswith(w) and name != w), "")
+            name = name[len(lead):]
             if not _looks_like_name(name) or len(mapping) >= self.MAX_SLOTS:
                 return m.group(0)
+            if (m.group("hon") == "くん" and name[-1] in _KU_VERB_KANJI
+                    and re.match("だ|で|じゃ|な", m.string[m.end():])):
+                return m.group(0)       # 聴くんだ / 聞くんです: động từ + んだ
             slot = "Pn" + chr(ord("A") + len(mapping))
-            mapping[slot] = m.group(0)
-            self.unknown[m.group(0)] = self.unknown.get(m.group(0), 0) + 1
-            return " " + slot + " "
+            full = name + m.group("hon")
+            mapping[slot] = full
+            self.unknown[full] = self.unknown.get(full, 0) + 1
+            return lead + " " + slot + " "
 
         out = _JA_NAME_RE.sub(_sub, text)
         return (re.sub(r"\s+", " ", out).strip(), mapping) if mapping else (text, {})
@@ -565,10 +607,8 @@ class NameProtector:
         if not mapping:
             return text, 0
 
-        def _salvage(m: re.Match) -> str:
-            return mapping.get("Pn" + m.group(1).upper(), m.group(0))
-
-        text = re.sub(r"\bp[nN]([a-zA-Z])\b", _salvage, text)
+        text = re.sub(r"\bp[nN]([a-zA-Z])\b|\bPn ([A-H])\b",
+                      lambda m: mapping.get("Pn" + (m.group(1) or m.group(2)).upper(), m.group(0)), text)
 
         lost = 0
         for slot, original in mapping.items():
@@ -579,6 +619,144 @@ class NameProtector:
                 lost += 1
 
         return re.sub(r"\s+", " ", text).strip(), lost
+
+
+_KANJI = "一-鿿々"
+_KATAKANA = "゠-ヿｦ-ﾟ"
+_HIRAGANA = "ぁ-ゖ"
+_KATA_RUN = re.compile(f"[{_KATAKANA}]+")
+_JA_PARTICLE_AHEAD = r"(?=[をがはにでともやのへ、。？！?!\s]|$)"
+_JA_TIME_WORDS = ("昨日", "今日", "明日", "毎日", "今朝", "毎朝", "今晩", "毎晩", "今週", "来週",
+                  "先週", "毎週", "今月", "来月", "先月", "今年", "去年", "来年", "最近")
+_JA_SINGLE_KANJI_BEHIND = ("(?:" + "|".join([f"(?<![{_KANJI}])"]
+                           + [f"(?<={w})" for w in _JA_TIME_WORDS]) + ")")
+
+
+_JA_SURU = r"(?:する|し(?:ます|ません|まし|て|た|ない|なかっ|よう)|でき|さ(?:せ|れ))"
+
+
+def _ja_word_pattern(word: str, noun_only: bool = True) -> str:
+    """Regex khớp `word` như một từ độc lập, không khớp vào giữa từ ghép."""
+    esc = re.escape(word)
+    not_verb = f"(?!{_JA_SURU})" if noun_only else ""
+    if re.fullmatch(f"[{_KANJI}]", word):
+        return f"{_JA_SINGLE_KANJI_BEHIND}{esc}{_JA_PARTICLE_AHEAD}"
+    if re.fullmatch(f"[{_KANJI}]+", word):
+        return f"{esc}(?![{_KANJI}]){not_verb}"
+    if re.fullmatch(f"[{_KATAKANA}]+", word):
+        return f"(?<![{_KATAKANA}]){esc}(?![{_KATAKANA}]){not_verb}"
+    if re.match(f"[{_HIRAGANA}]", word):
+        return f"{_JA_SINGLE_KANJI_BEHIND}{esc}{not_verb}"
+    return esc + not_verb
+
+
+_JA_EXCLAIM_RE = re.compile(r"^(?:あっ|ああ|あ|えっ|ええ|え|へえ|へ|おお|おっ|うわ|わあ)")
+
+
+def _norm_phrase(text: str) -> str:
+    return re.sub(r"[\s、。，．,.!?！？…~〜ー]+", "", text).lower()
+
+
+class Lexicon:
+    """
+    Vốn từ đời thường (everyday.json), chỉ Nhật -> Việt. Danh từ đi qua bộ dịch bằng ký hiệu giữ chỗ
+    (mục có "verb" thì cả dạng động từ 出張します, mục chỉ có "verb" thì chỉ dạng động từ);
+    câu cửa miệng khớp nguyên câu thì trả thẳng bản dịch.
+    """
+
+    DIRECTIONS = {("ja", "vi")}
+    SLOTS = tuple(f"W{i}" for i in range(1, 7))
+
+    def __init__(self, entries: list[dict], phrases: list[dict] | None = None):
+        self.words: dict[str, str] = {}
+        self.verbs: dict[str, str] = {}
+        for e in entries:
+            vi = (e.get("vi") or "").strip()
+            verb = (e.get("verb") or "").strip()
+            for ja in e.get("ja", []):
+                ja = (ja or "").strip()
+                if ja and (vi or verb) and ja not in self.words:
+                    self.words[ja] = vi
+                    if verb:
+                        self.verbs[ja] = verb
+        self._verb_vi = set(self.verbs.values())
+        keys = sorted(self.words, key=len, reverse=True)
+        self._pattern = re.compile("|".join(
+            _ja_word_pattern(k, k not in self.verbs) + ("" if self.words[k] else f"(?={_JA_SURU})")
+            for k in keys)) if keys else None
+
+        self.phrases: dict[str, str] = {}
+        for e in phrases or []:
+            vi = (e.get("vi") or "").strip()
+            for ja in e.get("ja", []):
+                key = _norm_phrase(ja or "")
+                if vi and key:
+                    self.phrases.setdefault(key, vi)
+
+    @classmethod
+    def load(cls, path: Path) -> "Lexicon":
+        try:
+            data = json.loads(Path(path).read_text(encoding="utf-8"))
+            lex = cls(data.get("entries", []), data.get("phrases", []))
+            print(f"📗 Từ đời thường: {len(lex.words)} cách viết, {len(lex.phrases)} câu cửa miệng")
+            return lex
+        except FileNotFoundError:
+            return cls([])
+        except Exception as err:
+            print(f"⚠️  Lỗi đọc {path} ({err}) — bỏ qua từ đời thường")
+            return cls([])
+
+    def phrase(self, text: str, src_lang: str, tgt_lang: str) -> str | None:
+        if (src_lang, tgt_lang) not in self.DIRECTIONS:
+            return None
+        key = _norm_phrase(text)
+        hit = self.phrases.get(key) or self.phrases.get(_JA_EXCLAIM_RE.sub("", key))
+        if hit:
+            return hit
+        # "そっか、いいですね": từng vế đều là câu cửa miệng
+        parts = [self.phrases.get(_norm_phrase(p)) for p in re.split(r"[、。！？!?]+", text) if p.strip()]
+        return " ".join(parts) if len(parts) > 1 and all(parts) else None
+
+    @classmethod
+    def _slot_re(cls, slot: str) -> re.Pattern:
+        return re.compile(rf"(?<![A-Za-z0-9]){slot[0]}[ -]?{slot[1:]}(?![A-Za-z0-9])", re.IGNORECASE)
+
+    def protect(self, text: str, src_lang: str, tgt_lang: str) -> tuple[str, dict[str, str]]:
+        if not self._pattern or not text or (src_lang, tgt_lang) not in self.DIRECTIONS:
+            return text, {}
+        if any(self._slot_re(slot).search(text) for slot in self.SLOTS):
+            return text, {}
+
+        mapping: dict[str, str] = {}
+
+        def _sub(m: re.Match) -> str:
+            if len(mapping) >= len(self.SLOTS):
+                return m.group(0)
+            slot, ja = self.SLOTS[len(mapping)], m.group(0)
+            is_verb = ja in self.verbs and re.match(_JA_SURU, m.string[m.end():])
+            mapping[slot] = self.verbs[ja] if is_verb else self.words[ja]
+            return slot
+
+        return self._pattern.sub(_sub, text), mapping
+
+    def restore(self, text: str, mapping: dict[str, str]) -> tuple[str, int]:
+        """Trả (text, số ký hiệu model làm mất)."""
+        lost = 0
+        for slot, word in mapping.items():
+            pat = self._slot_re(slot)
+            if not pat.search(text):
+                lost += 1
+                continue
+            if word in self._verb_vi:
+                # model dịch "W1します" thành "làm W1"
+                pat = re.compile(r"(?:\blàm\s+(?:được\s+)?)?" + pat.pattern, re.IGNORECASE)
+
+            def _fill(m: re.Match, word: str = word) -> str:
+                starts_sentence = re.search(r"(?:^|[.!?])\s*$", m.string[:m.start()])
+                return _cap_first(word) if starts_sentence else word
+
+            text = pat.sub(_fill, text)
+        return text, lost
 
 
 def people_to_entries(people: list[dict]) -> list[dict]:
@@ -650,7 +828,21 @@ _JA_FILLER_RE = re.compile(
     r"(?:えーと|えっと|ええと|えーっと|うーん|うんーと|んー|えー(?![るりらろ])|"
     r"あのー+|そのー+|あーー*)"
     r"[、,\s]*"
+    r"(?:ですね[ー、,\s]*)?"       # "えーとですね、" — です ở đây không phải vị ngữ
 )
+
+# "ですね" đứng đầu câu chỉ là câu mào đầu (あのですね、…); để nguyên thì model dịch thành "Được rồi."
+_JA_LEADIN_RE = re.compile(r"^(?:あの|その|まあ|まぁ|なんか)?ですね[ー、,\s]*")
+
+# "何か / なんか" đệm đầu câu (いや何か子どもの時に…). Giữ lại khi nó là "cái gì đó" thật: 何か質問, 何かあれば…
+_JA_NANKA_REAL = (r"質問|問題|ご|お|あれば|あったら|あり|ある|あっ|でき|いい|食べ|飲|手伝|方法|意見|用|変|困|心配"
+                  r"|気に|分か|わか|欲し|ほし|した|しま|しよ|言|聞|買|[をがにはもとの]")
+_JA_NANKA_RE = re.compile(
+    r"(?:(?<=^)|(?<=いや)|(?<=そう)|(?<=うわ)|(?<=でも)|(?<=あの)|(?<=ああ)|(?<=まあ))"
+    rf"(?:何か|なんか)(?!{_JA_NANKA_REAL})")
+
+# Mẩu rơi ra sau khi câu trước đã chốt ("…大事" | "なんですよ"), hoặc một chữ kana lẻ: không có gì để dịch.
+_JA_EMPTY_RE = re.compile(r"(?:なん|ん)です(?:よね|よ|ね|けど|が)?|です(?:よ|ね|けど|が)?|[ぁ-ゖ゠-ヿ]")
 
 _VI_FILLER_RE = re.compile(
     r"(?:^|(?<=[\s,]))(?:ừ+m*|ờ+|à|ê)(?=[\s,]|$)[\s,]*",
@@ -672,6 +864,10 @@ def strip_fillers(text: str, lang: str) -> str:
 
     if lang == "ja":
         out = _JA_FILLER_RE.sub("", text)
+        out = _JA_LEADIN_RE.sub("", out)
+        out = _JA_NANKA_RE.sub("", out)
+        if _JA_EMPTY_RE.fullmatch(out.strip(" 、。")):
+            return ""
     elif lang == "en":
         out = _EN_FILLER_RE.sub(" ", text)
     else:
@@ -702,8 +898,10 @@ class Deduper:
         now = time.time()
         while self.recent and now - self.recent[0][0] > self.window:
             self.recent.popleft()
+        # So chứa nhau chỉ khi cả hai đều đủ dài, kẻo "はい" vừa nói làm câu dài bắt đầu bằng はい bị coi là trùng.
         for _, old in self.recent:
-            if old == key or (len(key) > 8 and (key in old or old in key)):
+            if old == key or (min(len(key), len(old)) > 8
+                              and (key in old or old in key)):
                 return True
         self.recent.append((now, key))
         return False
@@ -758,11 +956,26 @@ _LATIN_GAP = re.compile(r"(?<=[A-Za-z0-9]) +(?=[A-Za-z0-9])")
 def _cap_first(text: str) -> str:
     """Viết hoa ký tự chữ đầu tiên, bỏ qua ký tự không phải chữ đứng trước."""
     for i, ch in enumerate(text):
+        if ch.isdigit():
+            return text
         if ch.isalpha():
             if ch.islower():
                 return text[:i] + ch.upper() + text[i + 1:]
             return text
     return text
+
+
+_VI_CLOCK = r"(?!\s+(?:sáng|trưa|chiều|tối|đêm))"
+
+
+def fix_duration(src: str, dst: str) -> str:
+    """Nhật -> Việt: 6時間 là "6 tiếng", không phải "6 giờ"."""
+    for n in dict.fromkeys(re.findall(r"(\d+)時間", src)):
+        if not re.search(rf"(?<!\d){n}時(?!間)", src):
+            dst = re.sub(rf"(?<!\d){n} giờ\b{_VI_CLOCK}", f"{n} tiếng", dst, flags=re.IGNORECASE)
+    if "何時間" in src and "何時" not in src.replace("何時間", ""):
+        dst = re.sub(rf"\b(mấy|bao nhiêu) giờ\b{_VI_CLOCK}", r"\1 tiếng", dst, flags=re.IGNORECASE)
+    return dst
 
 
 def cleanup(text: str, lang: str) -> str:
@@ -775,6 +988,7 @@ def cleanup(text: str, lang: str) -> str:
         text = _REPEAT_PHRASE.sub(r"\1", text)
         text = re.sub(r"\s+", " ", text)
         text = re.sub(r"\s+([,.!?;:])", r"\1", text)
+        text = re.sub(r"^(?:[-–—•.,;:]\s*)+(?!\d)", "", text)
         text = _cap_first(text)
     else:
         text = _LATIN_GAP.sub("\x00", text)
@@ -786,9 +1000,11 @@ def cleanup(text: str, lang: str) -> str:
 class PostProcessor:
     """Gộp tất cả lại. Mỗi kết nối WebSocket dùng một instance riêng."""
 
-    def __init__(self, glossary: Glossary, cache: TranslationCache | None = None):
+    def __init__(self, glossary: Glossary, cache: TranslationCache | None = None,
+                 lexicon: Lexicon | None = None):
         self.glossary = glossary
         self.cache = cache or TranslationCache()
+        self.lexicon = lexicon or Lexicon([])
         self.deduper = Deduper()
         self.names = NameProtector()
         self.stats = {"dedup": 0, "glossary": 0, "term_fix": 0, "cache_hit": 0,
@@ -813,6 +1029,17 @@ class PostProcessor:
         self.stats["name_lost"] += lost
         return out, lost
 
+    def protect_words(self, text: str, src_lang: str,
+                      tgt_lang: str) -> tuple[str, dict[str, str]]:
+        """Gọi TRƯỚC protect_names(), để 旦那さん / 赤ちゃん không bị coi là tên người."""
+        return self.lexicon.protect(text, src_lang, tgt_lang)
+
+    def restore_words(self, text: str, mapping: dict[str, str]) -> tuple[str, int]:
+        return self.lexicon.restore(text, mapping)
+
+    def phrase(self, text: str, src_lang: str, tgt_lang: str) -> str | None:
+        return self.lexicon.phrase(text, src_lang, tgt_lang)
+
     def prepare_source(self, text: str, lang: str) -> str:
         """"""
         if lang == "vi" and text:
@@ -836,6 +1063,8 @@ class PostProcessor:
         dst, hits = self.glossary.apply(src, dst, src_lang, tgt_lang)
         self.stats["glossary"] += hits
         dst = fix_decimal_locale(dst, tgt_lang)
+        if (src_lang, tgt_lang) == ("ja", "vi"):
+            dst = fix_duration(src, dst)
         if tgt_lang in ("vi", "en"):
             dst = _cap_first(dst)
         return dst

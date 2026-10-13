@@ -3,7 +3,8 @@
 Đo chất lượng DỊCH MÁY (không qua ASR) cho 4 chiều: ja↔vi, en↔vi (không có en↔ja).
 
 Mỗi câu nguồn đi qua ĐÚNG pipeline chữ của app:
-    prepare_source -> bỏ tiếng đệm -> bọc tên người -> M2M-100 -> finish (glossary)
+    prepare_source -> tách câu -> bỏ tiếng đệm -> bọc tên người -> M2M-100
+    -> finish (glossary)
 rồi so với bản tham chiếu.
 
 Cách dùng:
@@ -36,6 +37,7 @@ BASE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE_DIR))
 
 from postprocess import PostProcessor, TranslationCache  # noqa: E402
+from segmenter import split_sentences  # noqa: E402
 
 LANGS = ("en", "ja", "vi")
 ALL_DIRS = ["ja-vi", "vi-ja", "en-vi", "vi-en"]
@@ -150,13 +152,30 @@ def load_rows(path: Path) -> list[dict]:
     return rows
 
 
-def translate_like_app(main, post: PostProcessor, text: str, sl: str, tl: str) -> str:
+def translate_like_app(main, post: PostProcessor, text: str, sl: str, tl: str,
+                       split: bool = True) -> str:
+    """split=True: tách câu rồi dịch từng câu như app; split=False: dịch nguyên khối (để so A/B)."""
     src = post.prepare_source(text, sl)
-    clean = post.for_model(src, sl)
-    mt_in, names = post.protect_names(clean, sl)
-    dst, _score = main.translate(mt_in, sl, tl, is_final=True, cache=None)
-    dst, _lost = post.restore_names(dst, names)
-    return post.finish(src, dst, sl, tl)
+    units = split_sentences(src, sl) if split else [src]
+    out = []
+    for unit in units:
+        clean = post.for_model(unit, sl)
+        if not clean:
+            continue
+        lead, clean, tail = main.split_phrases(post, clean, sl, tl)
+        if not clean:
+            out.append(post.finish(unit, " ".join(lead + tail), sl, tl))
+            continue
+        lx_in, words = post.protect_words(clean, sl, tl)
+        mt_in, names = post.protect_names(lx_in, sl)
+        dst, _score = main.translate_final(mt_in, sl, tl)
+        dst, words_lost = post.restore_words(dst, words)
+        if words_lost:
+            mt_in, names = post.protect_names(clean, sl)
+            dst, _score = main.translate_final(mt_in, sl, tl)
+        dst, _lost = post.restore_names(dst, names)
+        out.append(post.finish(unit, main.join_phrases(lead, dst, tail), sl, tl))
+    return ("" if tl == "ja" else " ").join(out)
 
 
 def run(sentences: Path, dirs: list[str], out_csv: Path) -> None:
@@ -170,7 +189,8 @@ def run(sentences: Path, dirs: list[str], out_csv: Path) -> None:
     results, summary = [], []
     for d in dirs:
         sl, tl = d.split("-")
-        post = PostProcessor(main.GLOSSARY, cache=TranslationCache())
+        post = PostProcessor(main.GLOSSARY, cache=TranslationCache(),
+                             lexicon=main.LEXICON)
         stats, n_ampm, n_num = [], 0, 0
         for r in rows:
             hyp = translate_like_app(main, post, r[sl], sl, tl)

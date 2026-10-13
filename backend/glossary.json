@@ -133,7 +133,9 @@
         "約束"
       ],
       "vi_guard": [],
-      "ja_guard": []
+      "ja_guard": [
+        "コミットメント"
+      ]
     },
     {
       "term": "push",
@@ -434,6 +436,19 @@
       "ja_bad": [
         "コードレビュー"
       ],
+      "vi_guard": [],
+      "ja_guard": []
+    },
+    {
+      "term": "review",
+      "ja_hears": [
+        "レビュー"
+      ],
+      "vi_hears": [
+        "ri viu"
+      ],
+      "vi_bad": [],
+      "ja_bad": [],
       "vi_guard": [],
       "ja_guard": []
     },
@@ -870,7 +885,9 @@
         "ポッド"
       ],
       "vi_guard": [],
-      "ja_guard": []
+      "ja_guard": [
+        "ポッドキャスト"
+      ]
     },
     {
       "term": "cluster",
@@ -1768,7 +1785,13 @@
         "ビュー"
       ],
       "vi_guard": [],
-      "ja_guard": []
+      "ja_guard": [
+        "プレビュー",
+        "インタビュー",
+        "オーバービュー",
+        "ビューア",
+        "ビューワー"
+      ]
     },
     {
       "term": "Angular",
@@ -4163,7 +4186,8 @@
       "term": "spec",
       "ja_hears": [
         "スペック",
-        "仕様書"
+        "仕様書",
+        "仕様"
       ],
       "vi_hears": [
         "sờ pếch"
